@@ -1,0 +1,37 @@
+.correct {
+  color: #00e235;
+}
+
+.overridden {
+  color: rgb(0, 167, 167);
+}
+
+.incorrect {
+  color: red;
+}
+
+.order {
+  color: red;
+  margin-right: 0.16rem;
+  margin-left: -0.16rem;
+  /* position: absolute;
+  margin-left: -0.4rem; */
+
+}
+
+.cursor {
+  position: absolute;
+  margin-left: -0.3rem;
+  padding-top: 1.05rem;
+  color: gray;
+}
+
+.result {
+  color: white;
+  overflow: clip;
+  width: 100%;
+}
+
+.partial {
+  color: rgb(20, 20, 20);
+}

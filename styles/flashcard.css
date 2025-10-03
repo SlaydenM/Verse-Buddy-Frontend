@@ -1,0 +1,146 @@
+.perspective {
+  perspective: 1000px;
+}
+
+.card {
+  transform-style: preserve-3d;
+  transition: transform 0.2s;
+}
+
+.card-face {
+  backface-visibility: hidden;
+}
+
+.rotate-x-180 {
+  transform: rotateX(180deg);
+}
+
+.rotate-x-180 .card-face.back {
+  transform: rotateX(180deg);
+}
+
+.card-face.back {
+  transform: rotateX(180deg);
+}
+
+@keyframes slideInBack {
+  0% {
+    transform: translate(0%, 0%) scale(90%) rotate(0);
+    opacity: 0.50;
+    z-index: 1;
+  }
+  50% {
+    transform: translate(20%, -110%) scale(90%) rotate(10deg);
+    opacity: 0.90;
+    z-index: 0;
+  }
+  51% {
+    z-index: 1;
+  }
+  100% {
+    transform: translate(0%, 0%) scale(100%) rotate(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutBack {
+  0% {
+    transform: translate(0%, 0%) scale(100%) rotate(0);
+    opacity: 1;
+    z-index: 1;
+  }
+  50% {
+    transform: translate(20%, -110%) scale(90%) rotate(10deg);
+    opacity: 0.90;
+    z-index: 1;
+  }
+  100% {
+    transform: translate(0%, 0%) scale(90%) rotate(0);
+    opacity: 0.50;
+    z-index: 0;
+  }
+}
+
+@keyframes slideInFront {
+  0% {
+    transform: scale(90%);
+    z-index: 0;
+  }
+  100% {
+    transform: scale(100%);
+    opacity: 1;
+    z-index: 1;
+  }
+}
+
+@keyframes slideOutFront {
+  0% {
+    transform: scale(100%);
+    opacity: 1;
+    z-index: 1;
+  }
+  100% {
+    transform: scale(90%);
+    z-index: 0;
+  }
+}
+
+@keyframes leftFail {
+  0% {
+    transform: translateX(0%) scale(100%);
+  }
+  25% {
+    transform: translateX(-10%) scale(95%);
+  }
+  50% {
+    transform: translateX(0%) scale(95%);
+  }
+  75% {
+    transform: translateX(-5%) scale(95%);
+  }
+  100% {
+    transform: translateX(0%) scale(100%);
+  }
+}
+
+@keyframes rightFail {
+  0% {
+    transform: translateX(0%) scale(100%);
+  }
+  25% {
+    transform: translateX(10%) scale(95%);
+  }
+  50% {
+    transform: translateX(0%) scale(95%);
+  }
+  75% {
+    transform: translateX(5%) scale(95%);
+  }
+  100% {
+    transform: translateX(0%) scale(100%);
+  }
+}
+
+.animate-slide-in-back {
+  animation: slideInBack 0.3s ease forwards;
+}
+
+.animate-slide-in-front {
+  animation: slideInFront 0.5s ease forwards;
+}
+
+.animate-slide-out-back {
+  animation: slideOutBack 0.3s ease forwards;
+}
+
+.animate-slide-out-front {
+  animation: slideOutFront 0.5s ease forwards;
+}
+
+.animate-left-u {
+  animation: leftFail 0.5s ease-in-out forwards;
+}
+
+.animate-right-u {
+  animation: rightFail 0.5s ease-in-out forwards;
+}
