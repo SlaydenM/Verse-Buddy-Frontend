@@ -29,62 +29,67 @@ interface CollectionItem {
 }
 
 export function StudiesDashboard() {
-  // ===== ALL HOOKS MUST BE CALLED FIRST (before any early returns) =====
-  const { user, loading: authLoading } = useAuth()
   const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
+  
   const [favoriteStudies, setFavoriteStudies] = useState<BibleReference[]>([])
   const [recentStudies, setRecentStudies] = useState<BibleReference[]>([])
-  const [references, setReferences] = useState<BibleReference[]>([])
-  const [isLoadingReferences, setIsLoadingReferences] = useState(true)
-  const [isLoading, setIsLoading] = useState(false)
+  const [references, setReferences] = useState<BibleReference[]>([] as BibleReference[])
+  const [isLoading, setIsLoading] = useState(true)
+  // console.log("Rerender!: ", user, isLoading, references.length)
   
   // Load recent studies from API (only when user is authenticated)
   useEffect(() => {
     if (!user) return // Skip for guests
     
-    // Favorite studies
-    const loadFavoriteStudies = async () => {
+    async function fetchData() {
+      // Fire all requests in parallel, don't await each individually
+      const favPromise = apiClient.getFavoriteReferences()
+      const recPromise = apiClient.getRecentReferences()
+      const allPromise = apiClient.getAllReferences()
+
       try {
-        const result = await apiClient.getFavoriteReferences()
-        // Make sure we're setting an array, not the full response object
-        setFavoriteStudies(result.favorites || [])
+      // console.log("awaiting...")
+        const [favResult, recResult, allResult] = await Promise.allSettled([
+          favPromise,
+          recPromise,
+          allPromise,
+        ])
+        
+        if (favResult.status === "fulfilled") {
+          setFavoriteStudies(favResult.value?.favorites || [])
+        } else {
+          setFavoriteStudies([])
+          console.error("Error loading favorite studies:", favResult.reason)
+        }
+
+        if (recResult.status === "fulfilled") {
+          setRecentStudies(recResult.value?.references?.slice(0, 6) || [])
+        } else {
+          setRecentStudies([])
+          console.error("Error loading recent studies:", recResult.reason)
+        }
+        
+        if (allResult.status === "fulfilled") {
+          setReferences(allResult.value?.references || [])
+        } else {
+          setReferences([])
+          console.error("Error loading all references:", allResult.reason)
+        }
       } catch (error) {
-        console.error("Error loading favorite studies:", error)
-        setFavoriteStudies([]) // Set empty array on error
-      }
-    }
-    loadFavoriteStudies()
-    
-    // Recent studies
-    const loadRecentStudies = async () => {
-      try {
-        const result = await apiClient.getRecentReferences()
-        // Make sure we're setting an array, not the full response object
-        setRecentStudies(result.references.slice(0, 6) || [])
-      } catch (error) {
-        console.error("Error loading recent studies:", error)
-        setRecentStudies([]) // Set empty array on error
-      }
-    }
-    loadRecentStudies()
-    
-    // All studies
-    const loadAllReferences = async () => {
-      try {
-        setIsLoadingReferences(true)
-        const result = await apiClient.getAllReferences()
-        setReferences(result.references)
-      } catch (error) {
-        console.error("Error loading all references:", error)
+        // This should only catch truly unexpected errors
+        console.error("Unexpected error loading references:", error)
       } finally {
-        setIsLoadingReferences(false)
+        setIsLoading(false)
+        // console.log("gotten")
       }
     }
-    loadAllReferences()
+    if (user) {
+      fetchData();
+    }
   }, [user])
   
-  // ===== ALL HOOKS ABOVE THIS LINE =====
-  
+  // Handlers
   const handleStudyClick = (reference: BibleReference) => {
     router.push(`/study?referenceId=${reference.id}`)
   }
@@ -129,11 +134,10 @@ export function StudiesDashboard() {
   }))*/
   
   // Calculate statistics
-  const totalReferences = references.length
+  const totalReferences = references.length || 0
   const uniqueBooks = [...new Set(references.map((ref) => ref.book))].length
   const totalVerses = references.reduce((sum, ref) => sum + (ref.endVerse - ref.startVerse + 1), 0)
   
-  // ===== NOW WE CAN SAFELY RETURN DIFFERENT CONTENT =====
   
   // Show loading spinner while auth is loading
   if (authLoading) {
@@ -165,14 +169,14 @@ export function StudiesDashboard() {
         </Badge>
       </div>
       
-      {(isLoading || isLoadingReferences) && (
+      {(isLoading) && (
         <div className="flex items-center justify-center p-8">
           <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
           <span>Loading studies...</span>
         </div>
       )}
       
-      {!isLoading && !isLoadingReferences && references.length === 0 && (
+      {!isLoading && references.length === 0 && (
         <Card>
           <CardContent className="text-center py-12">
             <BookOpen className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />

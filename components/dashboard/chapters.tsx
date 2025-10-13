@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CollectionList } from "@/components/ui/collection-list"
 import { CreateNewStudy } from "@/components/ui/create-study-modal"
+import { useAuth } from "@/contexts/auth-context"
 import { apiClient } from "@/lib/api-client"
 import type { BibleReference } from "@/types/bible"
 import { ArrowLeft, BookOpen, Loader2 } from "lucide-react"
@@ -21,14 +22,17 @@ interface CollectionItem {
 
 export function ChaptersDashboard() {
   const router = useRouter()
+  // const { user, loading: authLoading } = useAuth()
   const searchParams = useSearchParams()
   const book = searchParams.get("book") || "Genesis"
-  
+
   const [references, setReferences] = useState<BibleReference[]>([])
   const [isLoading, setIsLoading] = useState(true)
   
   // Load references for this specific book from API
   useEffect(() => {
+    // if (!user) return // Skip for guests
+
     const loadBookReferences = async () => {
       try {
         setIsLoading(true)
@@ -44,7 +48,7 @@ export function ChaptersDashboard() {
     if (book) {
       loadBookReferences()
     }
-  }, [book])
+  }, [])
   
   // Get unique chapters from the references
   const uniqueChapters = [...new Set(references.map((ref) => ref.chapter))].sort((a, b) => a - b)

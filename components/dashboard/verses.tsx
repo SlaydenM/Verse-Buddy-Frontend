@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CollectionList } from "@/components/ui/collection-list"
 import { CreateNewStudy } from "@/components/ui/create-study-modal"
+import { useAuth } from "@/contexts/auth-context"
 import { useLocalStorage } from "@/hooks/use-local-storage"
 import { apiClient } from "@/lib/api-client"
 import type { BibleReference } from "@/types/bible"
@@ -20,13 +21,37 @@ interface Study {
 }
 
 export function VersesDashboard() {
-  const searchParams = useSearchParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  // const { user, loading: authLoading } = useAuth()
   const book = searchParams.get("book") || "Genesis"
   const chapter = Number.parseInt(searchParams.get("chapter") || "1", 10)
-  const redirectToStudies = Boolean(searchParams.get("s"))
   
+  // const redirectToStudies = Boolean(searchParams.get("s"))
   const [favoriteStudies, setFavoriteStudies] = useLocalStorage<Study[]>("favoriteStudies", [])
+  const [references, setReferences] = useState<BibleReference[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+    
+  // Load references for this specific book and chapter from API
+  useEffect(() => {
+    // if (!user) return // Skip for guests
+
+    const loadChapterReferences = async () => {
+      try {
+        setIsLoading(true)
+        const result = await apiClient.getReferencesByChapter(book, chapter)
+        setReferences(result.references)
+      } catch (error) {
+        console.error("Error loading chapter references:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    if (book && chapter) {
+      loadChapterReferences()
+    }
+  }, [])
   
   let handleBackClick = () => {
     router.back()
@@ -50,31 +75,9 @@ export function VersesDashboard() {
     }
   }
   
-  const [references, setReferences] = useState<BibleReference[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  
-  // Load references for this specific book and chapter from API
-  useEffect(() => {
-    const loadChapterReferences = async () => {
-      try {
-        setIsLoading(true)
-        const result = await apiClient.getReferencesByChapter(book, chapter)
-        setReferences(result.references)
-      } catch (error) {
-        console.error("Error loading chapter references:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    
-    if (book && chapter) {
-      loadChapterReferences()
-    }
-  }, [book, chapter])
-  
-  const verseRangesCount = references.length
   
   // Calculate verse statistics
+  const verseRangesCount = references.length
   const totalVerses = references.reduce((sum, ref) => sum + (ref.endVerse - ref.startVerse + 1), 0)
   const verseRanges = references.map((ref) => `${ref.startVerse}-${ref.endVerse}`).join(", ")
   

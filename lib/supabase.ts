@@ -1,17 +1,12 @@
+// NOT IN USE
+
 import { createClient } from "@supabase/supabase-js"
 import type { Database } from "@/types/database"
 import type { BibleReference } from "@/types/bible"
 import type { BibleReference as DbBibleReference, BibleReferenceInsert } from "@/types/database"
+import { BookType } from "./bible-data";
 
 // --- Supabase client -------------------------------------------------------
-/**
- * In a local preview / Code Project the two NEXT_PUBLIC_* variables usually
- * don’t exist, which makes `createClient` throw (“supabaseUrl is required.”).
- * We therefore:
- *   • read the vars _without_ the non-null (!) assertion
- *   • fall back to obvious placeholders so the app keeps running
- *   • log a clear warning so that real keys are added before deployment
- */
 const supabaseUrl =
   process.env.NEXT_PUBLIC_SUPABASE_URL || "https://example.supabase.co"; /* placeholder – replace in production */
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "public-anon-key-placeholder"
@@ -42,13 +37,14 @@ function dbRowToBibleReference(row: DbBibleReference): BibleReference {
   return {
     id: row.id,
     version: row.version,
-    book: row.book,
+    book: row.book as BookType,
     chapter: row.chapter,
     startVerse: row.start_verse,
     endVerse: row.end_verse,
     finalVerse: row.final_verse,
     isFavorite: row.is_favorite,
-    text: row.text,
+    text: row.text || [],
+    headings: row.headings || [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }

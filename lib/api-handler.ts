@@ -1,13 +1,14 @@
 import { createClient } from '@/utils/supabase/server'
 import type { BibleReference } from "@/types/bible"
 import type { BibleReference as DbBibleReference, BibleReferenceInsert } from "@/types/database"
+import { BookType } from './bible-data'
 
 // Convert database row to BibleReference
 function dbRowToBibleReference(row: DbBibleReference): BibleReference {
   return {
     id: row.id,
     version: row.version,
-    book: row.book,
+    book: row.book as BookType,
     chapter: row.chapter,
     startVerse: row.start_verse,
     endVerse: row.end_verse,
@@ -76,7 +77,7 @@ export class Handler {
     return { data, autoSignedIn: false }
   }
   
-  // Sign in with email and password`
+  // Sign in with email and password
   static async signIn(email: string, password: string) {
     const supabase = await createClient()
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -545,6 +546,44 @@ export class Handler {
         count,
       }))
       .sort((a, b) => a.chapter - b.chapter)
+  }
+  
+  static async favoriteAll(ids: string[]): Promise<void> {
+    const supabase = await createClient()
+    const userId = await this.getCurrentUserId(supabase)
+    if (!userId) {
+      throw new Error("User not authenticated")
+    }
+  
+    const { data, error } = await supabase
+      .from("bible_references")
+      .update({ is_favorite: true })
+      .in("id", ids)
+      .eq("user_id", userId)
+    
+    if (error) {
+      console.error(`Error favoriting references`, error);
+      throw new Error(`Failed to favorite references`);
+    }
+  }
+  
+  static async unfavoriteAll(ids: string[]): Promise<void> {
+    const supabase = await createClient()
+    const userId = await this.getCurrentUserId(supabase)
+    if (!userId) {
+      throw new Error("User not authenticated")
+    }
+  
+    const { data, error } = await supabase
+      .from("bible_references")
+      .update({ is_favorite: false })
+      .in("id", ids)
+      .eq("user_id", userId)
+    
+    if (error) {
+      console.error(`Error unfavoriting references`, error);
+      throw new Error(`Failed to unfavorite references`);
+    }
   }
   
   // Save verse text for a reference

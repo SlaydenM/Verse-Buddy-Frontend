@@ -1,17 +1,17 @@
-import { type NextRequest, NextResponse } from "next/server"
 import { Handler } from "@/lib/api-handler"
+import { NextResponse } from "next/server"
 
-export async function POST(request: NextRequest) {
+export async function POST(req: Request) {
   try {
     console.log("supa signing out")
     await Handler.signOut()
     
-    return NextResponse.json({
-      success: true,
-      message: "Signed out successfully",
-    })
-  } catch (error) {
-    console.error("Signout API error:", error)
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Signout failed" }, { status: 400 })
+    const res = NextResponse.json({ success: true })
+    res.cookies.set("sb-access-token", "", { httpOnly: true, path: "/", maxAge: 0 })
+    res.cookies.set("sb-refresh-token", "", { httpOnly: true, path: "/", maxAge: 0 })
+    return res
+  } catch (err) {
+    console.error("Signout error:", err)
+    return NextResponse.json({ success: false, error: "Signout failed" }, { status: 500 })
   }
 }

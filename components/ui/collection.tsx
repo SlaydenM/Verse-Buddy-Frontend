@@ -44,30 +44,21 @@ export function Collection({title, subtitle, references, addToFavorites, removeF
       // Toggle favorite status for all references in this collection
       const fav = allStudiesFavorited
       setAllStudiesFavorited(!fav)
-      let updatePromises = null
-      //if (Array.isArray(references)) {
-      updatePromises = references.map(async (ref) => {
-        const response = await apiClient.updateReference(ref.id, { isFavorite: !fav })
-        if (response.success) {
-          if (addToFavorites)
-            (fav) ? removeFromFavorites(ref) : addToFavorites(ref)
-          else
-            ref.isFavorite = !fav
-        }
-        return response
-      })
-      /*} else {
-        const response = await apiClient.updateReference(reference.id, { isFavorite: !fav })
-        if (response.success) {
-          if (addToFavorites)
-            (fav) ? removeFromFavorites(ref) : addToFavorites(ref)
-          else
-            ref.isFavorite = !fav
-        }
-        updatePromises = [response]
-      }*/ // SHOULD ALWAYS BE AN ARRAY
       
-      await Promise.all(updatePromises)
+      const ids = references.map((ref) => {
+        if (fav) {
+          removeFromFavorites(ref)
+        } else {
+          addToFavorites(ref)
+        }
+        return ref.id;
+      });
+      
+      if (fav) {
+        await apiClient.unfavoriteAll(ids);
+      } else {
+        await apiClient.favoriteAll(ids);
+      }
       
       // Optional: Show success feedback
       console.log("Favorite status updated successfully")

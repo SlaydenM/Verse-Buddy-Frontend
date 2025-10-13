@@ -30,7 +30,7 @@ export function AuthModal({ isOpen, onOpenChange, defaultMode = "signin" }: Auth
   const [success, setSuccess] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   
-  const { signIn, signUp, resetPassword } = useAuth()
+  const { signIn, signUp } = useAuth()
   
   const resetForm = () => {
     setEmail("")
@@ -64,7 +64,7 @@ export function AuthModal({ isOpen, onOpenChange, defaultMode = "signin" }: Auth
           return
         }
         
-        const result = await signUp(email, password, displayName)
+        const result = await signUp(email, password)//, displayName)
         
         if (result.autoSignedIn) {
           // User was automatically signed in, close modal and redirect
@@ -80,7 +80,7 @@ export function AuthModal({ isOpen, onOpenChange, defaultMode = "signin" }: Auth
           setSuccess(null)
         }
       } else if (mode === "reset") {
-        await resetPassword(email)
+        // await resetPassword(email) // CHANGE
         setMode("check-email")
         setSuccess(null)
       }
