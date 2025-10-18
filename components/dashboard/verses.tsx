@@ -28,6 +28,7 @@ export function VersesDashboard() {
   const chapter = Number.parseInt(searchParams.get("chapter") || "1", 10)
   
   // const redirectToStudies = Boolean(searchParams.get("s"))
+  const [favoriteMap, setFavoriteMap] = useState<Record<string, boolean>>({});
   const [favoriteStudies, setFavoriteStudies] = useLocalStorage<Study[]>("favoriteStudies", [])
   const [references, setReferences] = useState<BibleReference[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -41,6 +42,10 @@ export function VersesDashboard() {
         setIsLoading(true)
         const result = await apiClient.getReferencesByChapter(book, chapter)
         setReferences(result.references)
+        
+        if (Object.keys(favoriteMap).length === 0) {
+          setFavoriteMap(result.references.reduce((acc: any, ref: BibleReference) => ({ ...acc, [ref.id]: ref.isFavorite }), {}));
+        }
       } catch (error) {
         console.error("Error loading chapter references:", error)
       } finally {
@@ -75,6 +80,15 @@ export function VersesDashboard() {
     }
   }
   
+  const updateFavorite = async (ids: string[], isFavorite: boolean) => {   
+    if (isFavorite) {
+      setFavoriteMap(ids.reduce((acc: any, id: string) => ({ ...acc, [id]: false }), favoriteMap))
+      await apiClient.unfavoriteAll(ids);
+    } else {
+      setFavoriteMap(ids.reduce((acc: any, id: string) => ({ ...acc, [id]: true }), favoriteMap))
+      await apiClient.favoriteAll(ids);
+    }
+  }
   
   // Calculate verse statistics
   const verseRangesCount = references.length
@@ -134,10 +148,10 @@ export function VersesDashboard() {
           <CardContent>
             <CollectionList 
               references={references} 
+              favoriteMap={favoriteMap}
+              updateFavorite={updateFavorite}
               book={book} 
               chapter={chapter} 
-              addToFavorites={(ref: BibleReference) => ref.isFavorite = true}
-              removeFromFavorites={(ref: BibleReference) => ref.isFavorite = false}
             />
           </CardContent>
         </Card>

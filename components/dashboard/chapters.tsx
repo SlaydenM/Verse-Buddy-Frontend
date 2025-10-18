@@ -25,19 +25,24 @@ export function ChaptersDashboard() {
   // const { user, loading: authLoading } = useAuth()
   const searchParams = useSearchParams()
   const book = searchParams.get("book") || "Genesis"
-
+  
+  const [favoriteMap, setFavoriteMap] = useState<Record<string, boolean>>({});
   const [references, setReferences] = useState<BibleReference[]>([])
   const [isLoading, setIsLoading] = useState(true)
   
   // Load references for this specific book from API
   useEffect(() => {
     // if (!user) return // Skip for guests
-
+    
     const loadBookReferences = async () => {
       try {
         setIsLoading(true)
         const result = await apiClient.getReferencesByBook(book)
         setReferences(result.references)
+        
+        if (Object.keys(favoriteMap).length === 0) {
+          setFavoriteMap(result.references.reduce((acc: any, ref: BibleReference) => ({ ...acc, [ref.id]: ref.isFavorite }), {}));
+        }
       } catch (error) {
         console.error("Error loading book references:", error)
       } finally {
@@ -50,6 +55,15 @@ export function ChaptersDashboard() {
     }
   }, [])
   
+  const updateFavorite = async (ids: string[], isFavorite: boolean) => {   
+    if (isFavorite) {
+      setFavoriteMap(ids.reduce((acc: any, id: string) => ({ ...acc, [id]: false }), favoriteMap))
+      await apiClient.unfavoriteAll(ids);
+    } else {
+      setFavoriteMap(ids.reduce((acc: any, id: string) => ({ ...acc, [id]: true }), favoriteMap))
+      await apiClient.favoriteAll(ids);
+    }
+  }
   // Get unique chapters from the references
   const uniqueChapters = [...new Set(references.map((ref) => ref.chapter))].sort((a, b) => a - b)
   const chapterCount = uniqueChapters.length
@@ -107,9 +121,9 @@ export function ChaptersDashboard() {
             <div className="space-y-3">
               <CollectionList 
                 references={references} 
+                favoriteMap={favoriteMap}
+                updateFavorite={updateFavorite}
                 book={book} 
-                addToFavorites={(ref: BibleReference) => ref.isFavorite = true}
-                removeFromFavorites={(ref: BibleReference) => ref.isFavorite = false}
               />
             </div>
           </CardContent>

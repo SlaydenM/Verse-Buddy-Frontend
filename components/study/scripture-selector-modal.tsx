@@ -16,88 +16,11 @@ import { BookOpen, CheckCircle, Copy, Loader2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import PassageEditor from "../ui/passage-editor"
 
-/*interface ScriptureSelectorModalProps {
-  isOpen: boolean
-  onOpenChange: (open: boolean) => void
-  onReferenceSelect: (reference: BibleReference) => void
-  // initReference?.book?: string
-  // initReference?.chapter?: number
-  initReference?: Partial<BibleReference>
+interface PassageDataDTO { 
+  text: string[]; 
+  headings: { [verseNum: number]: string };
+  startVerse: number;
 }
-
-export function ScriptureSelectorModal({ isOpen, onOpenChange, onReferenceSelect, initReference = {version: "NKJV", book: "Exodus", chapter: 1}}: ScriptureSelectorModalProps) {
-  const [version, setVersion] = useState<string>(initReference.version!)
-  const [book, setBook] = useState<BookType>((initReference.book) as BookType)
-  const [chapter, setChapter] = useState<number>(initReference.chapter as number)
-  const [startVerse, setStartVerse] = useState<number>(initReference?.startVerse || 1)
-  const [endVerse, setEndVerse] = useState<number>(initReference?.endVerse || 1)
-  const [passageData, setPassageData] = useState<{ text: string[]; headings: { [verseNum: number]: string } }>({
-    text: [],
-    headings: {},
-  })
-  const [chapterCount, setChapterCount] = useState<number>(0)
-  const [verseCount, setVerseCount] = useState<number>(0)
-  const [chapterSelectIsExpanded, setChapterSelectIsExpanded] = useState<boolean>(!initReference || true)
-  const [isLoading, setIsLoading] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [isLoadingPassage, setIsLoadingPassage] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
-  
-  // Update chapter count when book changes
-  useEffect(() => {
-    if (book) {
-      const count = getChapterCount(book)
-      setChapterCount(count)
-      // Reset chapter to 1 when book changes
-      if (book !== initReference?.book) setChapter(1)
-      setChapterSelectIsExpanded(!chapterSelectIsExpanded)
-    } else {
-      setChapterCount(0)
-    }
-  }, [book])
-  
-  // Update verse count when book and chapter change
-  useEffect(() => {
-    if (book && chapter) {
-      const count = getVerseCount(book, chapter)
-      setVerseCount(count)
-      // Reset verse selection when chapter changes
-      setStartVerse(1)
-      setEndVerse(count)
-    } else {
-      setVerseCount(0)
-    }
-  }, [book, chapter])
-
-  // Ensure end verse is not less than start verse
-  useEffect(() => {
-    if (endVerse < startVerse) {
-      setEndVerse(startVerse)
-    }
-  }, [startVerse, endVerse])
-
-  // Clear messages when dialog opens/closes
-  useEffect(() => {
-    if (isOpen) {
-      setError(null)
-      setSuccess(null)
-    }
-  }, [isOpen])
-
-  // Set initial book from props
-  useEffect(() => {
-    if (initReference?.book) {
-      setBook(initReference?.book as BookType)
-    }
-  }, [initReference?.book])
-  
-  // Set initial chapter from props
-  useEffect(() => {
-    if (initReference?.chapter) {
-      setChapter(initReference?.chapter)
-    }
-  }, [initReference?.chapter])*/
 
 export interface ScriptureSelectorModalProps {
   isOpen: boolean
@@ -120,73 +43,88 @@ export function ScriptureSelectorModal({
   const [version, setVersion] = useState<string>(initReference.version || "NKJV")
   const [book, setBook] = useState<BookType>(initReference.book || "Genesis")
   const [chapter, setChapter] = useState<number>(initReference.chapter || 1)
-  const [startVerse, setStartVerse] = useState<number>(initReference.startVerse ?? 1)
-  const [endVerse, setEndVerse] = useState<number>(initReference.endVerse ?? 1)
-  
-  const [passageData, setPassageData] = useState<{ text: string[]; headings: { [verseNum: number]: string } }>({
-    text: [],
-    headings: {},
-  })
-
+  const [startVerse, setStartVerse] = useState<number>(initReference.startVerse || 1)
+  const [endVerse, setEndVerse] = useState<number>(initReference.endVerse || 1)
   const [chapterCount, setChapterCount] = useState<number>(0)
   const [verseCount, setVerseCount] = useState<number>(0)
-  const [chapterSelectIsExpanded, setChapterSelectIsExpanded] = useState<boolean>(true)
-
+  const [passageData, setPassageData] = useState<PassageDataDTO>({
+    text: [],
+    headings: {},
+    startVerse: 0,
+  })
+  
+  console.log("INIT:", initReference, initReference.book || "Genesis")
+  
+  
   // Render variables
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isLoadingPassage, setIsLoadingPassage] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [chapterSelectIsExpanded, setChapterSelectIsExpanded] = useState<boolean>(true)
 
   // ----------------------------
   // Track mount vs updates
   // ----------------------------
-  const didMountRef = useRef(false)
+  // const didMountRef = useRef(false)
   const prevBookRef = useRef(book)
   const prevChapterRef = useRef(chapter)
   
-  const initChapterAndVerse = () => {
-    setVerseCount(getVerseCount(book, chapter))
-    setChapterCount(getChapterCount(book))
-    // console.log("CHANG:", book, chapter)
-  }
-
+  // const updateChapter = 
+  
+  // const updateBook = 
+  
+  useEffect(() => {
+    setVersion(initReference.version || "NKJV")
+    setBook(initReference.book || "Genesis")
+    setChapter(initReference.chapter || 1)
+    setStartVerse(initReference.startVerse || 1)
+    setEndVerse(initReference.endVerse || 1)
+  }, [initReference])
+  
   // ----------------------------
   // React to book changes AFTER init
   // ----------------------------
   useEffect(() => {
-    if (!didMountRef.current) return
+    // console.log("B:", book, chapter)
     if (book !== prevBookRef.current) {
+      setChapterCount(getChapterCount(book))
       setChapter(1)
       setChapterSelectIsExpanded(true)
-      setStartVerse(1)
-      setEndVerse(verseCount || 1) // safe default
     }
     prevBookRef.current = book
-  }, [book, verseCount])
-
+  }, [book])
+  
   // ----------------------------
   // React to chapter changes AFTER init
   // ----------------------------
   useEffect(() => {
-    if (!didMountRef.current) return
+    // console.log("C:", book, chapter)
     if (chapter !== prevChapterRef.current) {
+      const verseCount = getVerseCount(book, chapter)
+      setVerseCount(verseCount)
       setStartVerse(1)
       setEndVerse(verseCount || 1)
     }
     prevChapterRef.current = chapter
-  }, [chapter, verseCount])
+  }, [chapter])
   
-  useEffect(initChapterAndVerse, [book, chapter])
+  useEffect(() => {
+    setStartVerse(passageData.startVerse);
+    if (passageData.text.length > 0) {
+      setEndVerse(passageData.startVerse + passageData.text.length - 1);
+    }
+  }, [passageData])
   
   // ----------------------------
   // Enable update detection *after* first render
   // ----------------------------
-  useEffect(() => {
-    didMountRef.current = true
-    initChapterAndVerse()
-  }, [])
+  // useEffect(() => {
+  //   console.log("M:", book, chapter)
+  //   // didMountRef.current = true
+  //   initChapterAndVerse()
+  // }, [])
   
   const handleVersionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setVersion(e.target.value)
@@ -389,7 +327,6 @@ export function ScriptureSelectorModal({
                     <Button
                       variant="outline"
                       size="sm"
-                      // target="_blank"
                       onClick={handlePasteFromBible}
                       disabled={isLoadingPassage || isSaving}
                       className="flex items-center gap-2 bg-transparent"
@@ -405,16 +342,6 @@ export function ScriptureSelectorModal({
                     onPassageDataChange={setPassageData}
                     initReference={initReference}
                   />
-                  
-                  {/* <Textarea
-                    placeholder="Paste or type the passage text here..."
-                    value={passageText}
-                    onChange={(e) => {
-                      setPassageText(e.target.value)
-                    }}
-                    className="min-h-[120px] resize-none"
-                    disabled={isSaving}
-                  /> */}
                 </CardContent>
               </Card>
             </div>

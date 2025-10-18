@@ -124,7 +124,7 @@ export function Study({ searchParams }: StudyProps) {
         console.log("checkz");
         if (fetchedReference.text && fetchedReference.text.length > 0) {
           // Use stored text
-          const storedVerses: BibleVerse[] = fetchedReference.text.map((text, index) => ({
+          const storedVerses: BibleVerse[] = fetchedReference.text.map((text: string, index: number) => ({
             verse: fetchedReference.startVerse + index,
             text: text.trim(),
           }));

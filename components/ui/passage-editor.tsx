@@ -3,9 +3,15 @@ import { useCallback, useMemo, useState } from "react";
 import { createEditor, Descendant, Text, Transforms } from "slate";
 import { Editable, RenderElementProps, RenderLeafProps, Slate, withReact } from "slate-react";
 
+interface PassageDataDTO { 
+  text: string[]; 
+  headings: { [verseNum: number]: string };
+  startVerse: number;
+}
+
 interface PassageEditorProps {
   className?: string;
-  onPassageDataChange?: (data: { text: string[]; headings: { [verseNum: number]: string } }) => void;
+  onPassageDataChange?: (data: PassageDataDTO) => void;
   initReference: Partial<BibleReference>;
 }
 
@@ -13,11 +19,7 @@ export default function StudyEditor({ className, onPassageDataChange, initRefere
   const editor = useMemo(() => withReact(createEditor()), []);
   const [value, setValue] = useState<Descendant[]>(generateSlate());
   
-  function generateSlate(): Descendant[] {
-    // if (!initReference) {
-    //   return [{ type: "paragraph", children: [{ text: "" }] }]
-    // }
-    
+  function generateSlate(): Descendant[] {    
     const text = initReference?.text
     const headings = initReference?.headings
     
@@ -48,16 +50,25 @@ export default function StudyEditor({ className, onPassageDataChange, initRefere
       
       // Insert verse paragraph
       const chunks = text[i].split('\n')
-      var fc: string = ""
-      if (!chunks.at(0)) {
+      const newLineStart = !chunks.at(0)
+      const fc = i + 1
+      
+      // Remove newline character if new paragraph
+      if (newLineStart || fc in headings) {
         chunks.shift();
-        fc = '\n' + (i + 1)
-      } else {
-        fc = "" + (i + 1)
       }
-      if (chunks.length === 1) {
+
+      if (length === 1) {
         children.push({ text: fc + text[i].trim() })
       } else {
+        if (newLineStart && children.length) {
+          // Add paragraph
+          result.push({
+            type: "paragraph",
+            children: children
+          });
+          children = []
+        }
         children.push({ text: fc + chunks[0].trim() })
         for (let j = 1; j < chunks.length; j++) {
           // Add paragraph
@@ -65,10 +76,9 @@ export default function StudyEditor({ className, onPassageDataChange, initRefere
             type: "paragraph",
             children: children
           });
-          children = []
           
           // Add chunk
-          children.push({ text: chunks[j].trim() })
+          children = [{ text: chunks[j].trim() }]
         }
       }
     }
@@ -85,8 +95,9 @@ export default function StudyEditor({ className, onPassageDataChange, initRefere
   const processSlate = (value: Descendant[]) => {    
     const headings: {[verseNum: number]: string} = {}
     const text: string[] = []
+    var startVerse: number = 0;
     
-    let prevVerseNum = 0
+    var prevVerseNum = 0
     value.forEach((block: any) => {      
       if (block.type === "heading") {
         // Add to headers using key
@@ -99,8 +110,13 @@ export default function StudyEditor({ className, onPassageDataChange, initRefere
             text[text.length - 1] += "\n" + child.text // Merge with previous verse
             return
           }
-          const verseNum = matches && matches.length > 0 ? parseInt(matches[matches.length - 1], 10) : prevVerseNum;
+          const verseNum = matches.length > 0 ? parseInt(matches[matches.length - 1], 10) : prevVerseNum;
           prevVerseNum = verseNum; // Update prev
+          
+          // Find first verse num
+          if (!startVerse) {
+            startVerse = parseInt(matches.at(0), 10) || 1; 
+          }
           
           // Split by verse number
           const newVerses: string[] = child.text.split(/\d{1,3}/).filter((part: string) => part !== "")
@@ -122,7 +138,12 @@ export default function StudyEditor({ className, onPassageDataChange, initRefere
       }
     });
     
-    return { text, headings };
+    // Default first verse num
+    if (!startVerse) {
+      startVerse = 1; 
+    }
+    
+    return { text, headings, startVerse } as PassageDataDTO;
   }
   
   // Decorate: tag numbers as superscript and headings
@@ -160,7 +181,7 @@ export default function StudyEditor({ className, onPassageDataChange, initRefere
         return <h1 className="font-bold text-xl py-2">{children}</h1>
       case 'paragraph':
       default:
-        return <p>{children}</p>
+        return <p className="indent-5 my-3">{children}</p>
     }
   }, [])
   

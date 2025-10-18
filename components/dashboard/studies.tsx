@@ -1,13 +1,13 @@
 "use client"
 
-import { StudyItem } from "@/components/study/study-item"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CollectionList } from "@/components/ui/collection-list"
+import { StudyList } from "../ui/study-list"
 import { CreateNewStudy } from "@/components/ui/create-study-modal"
 import { useAuth } from "@/contexts/auth-context"
 import { apiClient } from "@/lib/api-client"
-import { bibleBooks } from "@/lib/bible-data"
+import { bibleBooks, getVerseCount } from "@/lib/bible-data"
 import type { BibleReference } from "@/types/bible"
 import { BookOpen, Clock, Heart, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -32,6 +32,7 @@ export function StudiesDashboard() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
   
+  const [favoriteMap, setFavoriteMap] = useState<Record<string, boolean>>({});
   const [favoriteStudies, setFavoriteStudies] = useState<BibleReference[]>([])
   const [recentStudies, setRecentStudies] = useState<BibleReference[]>([])
   const [references, setReferences] = useState<BibleReference[]>([] as BibleReference[])
@@ -72,6 +73,11 @@ export function StudiesDashboard() {
         
         if (allResult.status === "fulfilled") {
           setReferences(allResult.value?.references || [])
+          
+          // Initialize favorite map
+          if (Object.keys(favoriteMap).length === 0) {
+            setFavoriteMap(allResult.value?.references.reduce((acc: any, ref: BibleReference) => ({ ...acc, [ref.id]: ref.isFavorite }), {}));
+          }
         } else {
           setReferences([])
           console.error("Error loading all references:", allResult.reason)
@@ -94,34 +100,15 @@ export function StudiesDashboard() {
     router.push(`/study?referenceId=${reference.id}`)
   }
   
-  const addToFavorites = (reference: BibleReference) => {
-    reference.isFavorite = true
-    setFavoriteStudies((prev) => [reference, ...prev])
-  }
-  
-  const removeFromFavorites = (reference: BibleReference) => {
-    reference.isFavorite = false
-    setFavoriteStudies((prev) => prev.filter((r) => r !== reference))
-  }
-  
-  const onToggleFavorite = (reference: BibleReference) => {
-    (reference.isFavorite) ? removeFromFavorites(reference) : addToFavorites(reference)
-  }
-  
-  const handleRecentsFavoriteClick = async (ref: BibleReference) => {
-    try {
-      // Toggle favorite status for this reference
-      const response = await apiClient.updateReference(ref.id, { isFavorite: !ref.isFavorite })
-      if (response.success) {
-        onToggleFavorite(ref)
-      }
-      
-      // Optional: Show success feedback
-      console.log("Favorite status updated successfully")
-      return response
-    } catch (error) {
-      console.error("Failed to update favorite status:", error)
-      // Optional: Show error feedback to user
+  const updateFavorite = async (ids: string[], isFavorite: boolean) => {   
+    if (isFavorite) {
+      setFavoriteMap(ids.reduce((acc: any, id: string) => ({ ...acc, [id]: false }), favoriteMap))
+      setFavoriteStudies((prev) => prev.filter(ref => !ids.includes(ref.id)))
+      await apiClient.unfavoriteAll(ids);
+    } else {
+      setFavoriteMap(ids.reduce((acc: any, id: string) => ({ ...acc, [id]: true }), favoriteMap))
+      setFavoriteStudies((prev) => [...new Set(prev.concat(references.filter(ref => ids.includes(ref.id))))])
+      await apiClient.favoriteAll(ids);
     }
   }
   
@@ -133,6 +120,32 @@ export function StudiesDashboard() {
     isFavorite: false,
   }))*/
   
+  // CHANGE: IMPORT FROM MODULE
+  const openStudy = (reference: BibleReference) => {
+    const params = new URLSearchParams({
+      referenceId: reference.id || ""
+    })
+    router.push(`/study/?${params.toString()}`)
+  }
+  const onDelete = async (refs: BibleReference[]) => {
+    console.log("Delete collection:", refs)
+    
+    try {
+      // Delete all references in this collection via API
+      for (const ref of refs) {
+        if (ref.id) {
+          await apiClient.deleteReference(ref.id)
+          references.splice(references.indexOf(ref), 1)
+        }
+      }
+      
+      // Refresh the page to update the UI
+      router.refresh()
+    } catch (error) {
+      console.error("Error deleting collection:", error)
+    }
+  }
+
   // Calculate statistics
   const totalReferences = references.length || 0
   const uniqueBooks = [...new Set(references.map((ref) => ref.book))].length
@@ -191,64 +204,50 @@ export function StudiesDashboard() {
       
       {references.length > 0 && (
         <>
-          {/* Favorites Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Heart className="h-5 w-5 text-red-500" />
-                Favorites
-                <Badge variant="outline">{favoriteStudies.length}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {favoriteStudies.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  No favorite studies yet. Add some studies to your favorites to see them here.
-                </p>
-              ) : (
-                <CollectionList 
-                  references={favoriteStudies}
-                  addToFavorites={addToFavorites}
-                  removeFromFavorites={removeFromFavorites}
-                  isFavoriteList={true} 
+          <div className="flex gap-5 w-full">
+            {/* Favorites Section */}
+            <Card className="w-full">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Heart className="h-5 w-5 text-red-500" />
+                  Favorites
+                  <Badge variant="outline">{favoriteStudies.length}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {favoriteStudies.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    No favorite studies yet. Add some studies to your favorites to see them here.
+                  </p>
+                ) : (
+                  <CollectionList 
+                    references={favoriteStudies}
+                    favoriteMap={favoriteMap}
+                    updateFavorite={updateFavorite}
+                    isFavoriteList
+                  />
+                )}
+              </CardContent>
+            </Card>
+            
+            {/* Recents Section */}
+            <Card className="w-full">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-blue-500" />
+                  Recents
+                  <Badge variant="outline">{recentStudies.length}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <StudyList 
+                  references={recentStudies} 
+                  favoriteMap={favoriteMap}
+                  updateFavorite={updateFavorite}
                 />
-              )}
-            </CardContent>
-          </Card>
-          
-          {/* Recents Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-blue-500" />
-                Recents
-                <Badge variant="outline">{recentStudies.length}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {recentStudies.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  No recent studies. Start studying some verses to see them here.
-                </p>
-              ) : (
-                <div className="grid gap-3">
-                  {recentStudies.map((ref, index) => {
-                    const id = `recent-${index}`
-                    return <StudyItem
-                      key={id}
-                      id={id}
-                      reference={ref}
-                      dateAdded={new Date().toISOString().split("T")[0]}
-                      isFavorite={ref.isFavorite}
-                      onClick={() => handleStudyClick(ref)}
-                      onToggleFavorite={() => handleRecentsFavoriteClick(ref)}
-                      showFavoriteButton={true}
-                    />
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
           
           {/* All Books Section - Using Collection Component */}
           <Card>
@@ -262,8 +261,8 @@ export function StudiesDashboard() {
             <CardContent>
               <CollectionList 
                 references={references} 
-                addToFavorites={addToFavorites}
-                removeFromFavorites={removeFromFavorites}
+                favoriteMap={favoriteMap}
+                updateFavorite={updateFavorite}
               />
             </CardContent>
           </Card>

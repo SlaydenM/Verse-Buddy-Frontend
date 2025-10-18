@@ -7,18 +7,25 @@ import { BookType, getChapterCount, getVerseCount } from "@/lib/bible-data"
 import type { BibleReference } from "@/types/bible"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { Study } from "../study/study-item"
 
 interface CollectionListProps {
   references: BibleReference[]
-  addToFavorites: (ref: BibleReference) => void
-  removeFromFavorites: (ref: BibleReference) => void
+  favoriteMap: Record<string, boolean>
+  updateFavorite: (ids: string[], isFavorite: boolean) => void
   isFavoriteList?: boolean | false
-  prevLink?: string | null
   book?: string | null
   chapter?: number | null
 }
 
-export function CollectionList({ references, addToFavorites, removeFromFavorites, isFavoriteList, prevLink = "pages/studies", book = null, chapter = null }: CollectionListProps) {
+export function CollectionList({ 
+  references, 
+  favoriteMap,
+  updateFavorite, 
+  isFavoriteList,
+  book = null, 
+  chapter = null 
+}: CollectionListProps) {
   const router = useRouter()
   
   const [editDialogOpen, setEditDialogOpen] = useState(false)
@@ -74,7 +81,7 @@ export function CollectionList({ references, addToFavorites, removeFromFavorites
     if (a.length === 1) return a[0]
     
     const last = a.pop()
-    console.log(a, last)
+    // console.log(a, last)
     return a.join(", ") + (a.length > 1 ? ", and " : " and ") + last
   }
   
@@ -114,7 +121,7 @@ export function CollectionList({ references, addToFavorites, removeFromFavorites
           references.splice(references.indexOf(ref), 1)
         }
       }
-
+      
       // Refresh the page to update the UI
       router.refresh()
     } catch (error) {
@@ -122,20 +129,14 @@ export function CollectionList({ references, addToFavorites, removeFromFavorites
     }
   }
   
-  const formatCollection = ( refs: BibleReference[] ): {
-    title: string
-    subtitle: string
-    onClick: () => void
-    onToggleFavorite?: () => void
-    onEditReference?: () => void
-    onDelete?: () => void
-  } => {
+  const formatItem = ( refs: BibleReference[], key: number ): any => {
     if (refs.length === 0) {
-      return {
-        title: "No studies found",
-        subtitle: "Create a new study to get started",
-        onClick: () => {},
-      }
+      // return <Collection
+      //   title={"No studies found"}
+      //   subtitle={"Create a new study to get started"}
+      //   // onClick={() => {}}
+      // >
+      return <>No Studies</>
     }
     
     const chapterGroups = groupChapters(refs)
@@ -148,57 +149,59 @@ export function CollectionList({ references, addToFavorites, removeFromFavorites
         // One verse range
         const ref = refs[0]
         return ref.startVerse === 1 && ref.endVerse >= getVerseCount(ref.book, ref.chapter)
-          ? {
-              // All verses in chapter
-              title: `${ref.book} ${ref.chapter}`,
-              subtitle: `Visit study (All ${ref.endVerse} verses)`,
-              onClick: () => openStudy(ref),
-              onToggleFavorite: () => {
-                console.log("Toggle favorite for:", refs)
-                // TODO: Implement favorite toggle logic
-              },
-              onEditReference: () => {
-                console.log("Edit reference for:", refs)
+          ? (<Study // All verses in chapter
+              key={key}
+              title={`${ref.book} ${ref.chapter}`}
+              subtitle={`Visit study (All ${ref.endVerse} verses)`}
+              id={ref.id}
+              favoriteMap={favoriteMap}
+              updateFavorite={updateFavorite}
+              onClick={() => openStudy(ref)}
+              onEdit={() => {
+                console.log("Edit reference for:", ref)
                 setEditingReference(ref)
                 setEditDialogOpen(true)
-              },
-              onDelete: () => onDelete(refs),
-            }
-          : {
-              // Any verse range
-              title: `${ref.book} ${ref.chapter}:${ref.startVerse}-${ref.endVerse}`,
-              subtitle: `Visit study (${ref.endVerse - ref.startVerse + 1} verses)`,
-              onClick: () => openStudy(ref),
-              onToggleFavorite: () => {
-                console.log("Toggle favorite for:", refs)
-                // TODO: Implement favorite toggle logic
-              },
-              onEditReference: () => {
-                console.log("Edit reference for:", refs)
+              }}
+              onDelete={() => onDelete([ref])}
+            />
+          ) : (
+            <Study // Any verse range
+              key={key}
+              title={`${ref.book} ${ref.chapter}:${ref.startVerse}-${ref.endVerse}`}
+              subtitle={`Visit study (${ref.endVerse - ref.startVerse + 1} verses)`}
+              id={ref.id}
+              favoriteMap={favoriteMap}
+              updateFavorite={updateFavorite}
+              onClick={() => openStudy(ref)}
+              onEdit={() => {
+                console.log("Edit reference for:", ref)
                 setEditingReference(ref)
                 setEditDialogOpen(true)
-              },
-              onDelete: () => onDelete(refs),
-            }
+              }}
+              onDelete={() => onDelete([ref])}
+            />
+          )
       } else {
         // Multiple verse ranges in same chapter
         //const totalVerses = refs.reduce((sum, ref) => sum + (ref.endVerse - ref.startVerse + 1), 0)
         const verseRanges = refs.map((ref) => `${ref.startVerse}-${ref.endVerse}`)
-        return {
-          title: `${book} ${chapterNum}`,
-          subtitle: `${refs.length} studies (Verses ${commaList(verseRanges)})`,
-          onClick: () => openCollectionVerses(book, chapterNum),
-          onToggleFavorite: () => {
-            console.log("Toggle favorite for:", refs)
-            // TODO: Implement favorite toggle logic
-          },
-          onEditReference: () => {
-            // console.log("Edit reference for:", refs)
-            // setEditingReference(ref)
-            // setEditDialogOpen(true)
-          },
-          onDelete: () => onDelete(refs),
-        }
+        return (
+          <Collection // Multiple ranges
+            key={key}
+            title={`${book} ${chapterNum}`}
+            subtitle={`${refs.length} studies (Verses ${commaList(verseRanges)})`}
+            ids={refs.map((ref) => ref.id)}
+            favoriteMap={favoriteMap}
+            updateFavorite={updateFavorite}
+            onClick={() => openCollectionVerses(book, chapterNum)}
+            onEdit={() => {
+              console.log("Edit reference for:", refs)
+              // setEditingReference(ref)
+              setEditDialogOpen(true)
+            }}
+            onDelete={() => onDelete(refs)}
+          />
+        )
       }
     } else {
       // Multiple chapters
@@ -206,55 +209,57 @@ export function CollectionList({ references, addToFavorites, removeFromFavorites
       const chaptersRangeList = commaRangeList(chapters)
       
       return chapters.length === getChapterCount(book) // || chapters.length > 3
-        ? {
-            // All chapters in book
-            title: book,
-            subtitle: `All ${chapters.length} chapters (${refs.length} studies)`,
-            onClick: () => openCollectionChapters(book),
-            onToggleFavorite: () => {
-              console.log("Toggle favorite for:", refs)
-              // TODO: Implement favorite toggle logic
-            },
-            onEditReference: () => {
-              // console.log("Edit reference for:", refs)
+        ? (
+          <Collection // Multiple ranges
+            key={key}
+            title={book}
+            subtitle={`All ${chapters.length} chapters (${refs.length} studies)`}
+            ids={refs.map((ref) => ref.id)}
+            favoriteMap={favoriteMap}
+            updateFavorite={updateFavorite}
+            onClick={() => openCollectionChapters(book)}
+            onEdit={() => {
+              console.log("Edit reference for:", refs)
               // setEditingReference(ref)
-              // setEditDialogOpen(true)
-            },
-            onDelete: () => onDelete(refs),
-          }
-        : chaptersRangeList.includes(",")
-          ? {
-              // One full range
-              title: `${book} ${chaptersRangeList}`,
-              subtitle: `${refs.length} studies)`,
-              onClick: () => openCollectionChapters(book),
-              onToggleFavorite: () => {
-                console.log("Toggle favorite for:", refs)
-                // TODO: Implement favorite toggle logic
-              },
-              onEditReference: () => {
-                // console.log("Edit reference for:", refs)
-                // setEditingReferences(refs)
-                // setEditDialogOpen(true)
-              },
-              onDelete: () => onDelete(refs),
-            }
-          : {
-              // Multiple chapter ranges
-              title: book,
-              subtitle: `Chapters ${chaptersRangeList}`,
-              onClick: () => openCollectionChapters(book),
-              onToggleFavorite: () => {
-                console.log("Toggle favorite for:", refs)
-                // TODO: Implement favorite toggle logic
-              },
-              onEditReference: () => {
-                // console.log("Edit reference for:", refs)
+              setEditDialogOpen(true)
+            }}
+            onDelete={() => onDelete(refs)}
+          />
+        ) : (chaptersRangeList.includes(",")
+          ? (
+            <Collection // Multiple ranges
+              key={key}
+              title={`${book} ${chaptersRangeList}`}
+              subtitle={`${refs.length} studies)`}
+              ids={refs.map((ref) => ref.id)}
+              favoriteMap={favoriteMap}
+              updateFavorite={updateFavorite}
+              onClick={() => openCollectionChapters(book)}
+              onEdit={() => {
+                console.log("Edit reference for:", refs)
                 // setEditingReference(ref)
-                // setEditDialogOpen(true)
-              },
-              onDelete: () => onDelete(refs),
-            }
+                setEditDialogOpen(true)
+              }}
+              onDelete={() => onDelete(refs)}
+            />
+          ) : (
+            <Collection // Multiple ranges
+              key={key}
+              title={book}
+              subtitle={`Chapters ${chaptersRangeList}`}
+              ids={refs.map((ref) => ref.id)}
+              favoriteMap={favoriteMap}
+              updateFavorite={updateFavorite}
+              onClick={() => openCollectionChapters(book)}
+              onEdit={() => {
+                console.log("Edit reference for:", refs)
+                // setEditingReference(ref)
+                setEditDialogOpen(true)
+              }}
+              onDelete={() => onDelete(refs)}
+            />
+          )
+        )
     }
   }
   
@@ -290,25 +295,7 @@ export function CollectionList({ references, addToFavorites, removeFromFavorites
     
     return (
       <div className="grid gap-3">
-        {groups.map((group, index) => {
-          const refsArray = Array.isArray(group) ? group : [group]
-          const collection = formatCollection(refsArray)
-          return (
-            <Collection
-              key={index}
-              title={collection.title}
-              subtitle={collection.subtitle}
-              references={group}
-              isFavorite={false} // TODO: Implement favorite status logic
-              addToFavorites={addToFavorites}
-              removeFromFavorites={removeFromFavorites}
-              onCollectionClick={collection.onClick}
-              onEditReference={collection.onEditReference}
-              onDelete={collection.onDelete}
-            />
-          )
-        })}
-        
+        {groups.map((group, index) => formatItem(Array.isArray(group) ? group : [group], index))}
         {!isFavoriteList && <CreateNewStudy initReference={initReference} />}
         <EditStudyModal
           isOpen={editDialogOpen}
