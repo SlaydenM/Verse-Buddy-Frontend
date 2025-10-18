@@ -395,7 +395,7 @@ export function QuizReveal({ reference }: QuizRevealProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Read - {formatReference(reference)}</CardTitle>
+        <CardTitle>Reveal - {formatReference(reference)}</CardTitle>
       </CardHeader>
       <CardContent>
         {/* Buttons */}
@@ -406,14 +406,14 @@ export function QuizReveal({ reference }: QuizRevealProps) {
         
         {/* Passage */}
         <div ref={containerRef} className="relative select-none">
-          <div className="relative bg-[#44444f] text-white min-h-[50vh] p-0 m-0" style={{ borderRadius: `${borderRadius}px`/*, background: "repeating-linear-gradient(-32deg, #6b6b6b, #5f5f5fff 25%, #6b6b6b 50%)"*/ }}>
+          <div className="relative bg-[#44444f] min-h-[50vh] p-0 m-0" style={{ borderRadius: `${borderRadius}px`/*, background: "repeating-linear-gradient(-32deg, #6b6b6b, #5f5f5fff 25%, #6b6b6b 50%)"*/ }}>
             <div ref={coverRef} className="cover inset-0 m-0 p-2 pb-4 ease-out duration-100" style={{backgroundColor: "hsl(var(--background))"}}>
               <p>
               {formatPassage()}
               </p>
             </div>
             
-            <div ref={dragHandleRef} className={`drag-handle absolute top-0 left-0 z-10 ease-out duration-100 px-1 py-1`}>
+            <div ref={dragHandleRef} className={`drag-handle text-white absolute top-0 left-0 z-10 ease-out duration-100 px-1 py-1`}>
               {isDraggingRef.current
                 ? <CircleDot/>
                 : <Move/>

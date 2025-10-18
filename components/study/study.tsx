@@ -23,6 +23,12 @@ const QuizSpeak = dynamic(() => import('@/components/study/quiz/quiz-speak').the
 const QuizMatch = dynamic(() => import('@/components/study/quiz/quiz-match').then(m => m.QuizMatch), { ssr: false })
 const QuizPhrase = dynamic(() => import('@/components/study/quiz/quiz-phrase').then(m => m.QuizPhrase), { ssr: false })
 
+interface OptionDTO {
+  value: string, 
+  label: string,
+  disabled?: boolean,
+}
+
 interface StudyProps {
   searchParams: {
     referenceId?: string,
@@ -44,56 +50,6 @@ export function Study({ searchParams }: StudyProps) {
   const handleBackClick = () => {
     router.back()
   }
-  
-  // useEffect(() => {
-  //   const loadReference = async () => {
-  //     if (!currentReferenceId) {
-  //       // Don't show error immediately, just set loading to false
-  //       setIsLoading(false)
-  //       return
-  //     }
-      
-  //     try {
-  //       setIsLoading(true)
-  //       setError(null)
-        
-  //       // Fetch the reference from Supabase
-  //       console.log("Fetching reference with ID:", currentReferenceId)
-  //       const result = await apiClient.getReference(currentReferenceId)
-        
-  //       if (!result || !result.reference) {
-  //         throw new Error("Reference not found")
-  //       }
-        
-  //       const fetchedReference = result.reference
-  //       setReference(fetchedReference)
-        
-  //       // If the reference has stored text, use it; otherwise fetch from Bible API
-  //       if (fetchedReference.text && fetchedReference.text.length > 0) {
-  //         // Convert stored text array to BibleVerse format
-  //         const storedVerses: BibleVerse[] = fetchedReference.text.map((text, index) => ({
-  //           verse: fetchedReference.startVerse + index,
-  //           text: text.trim(),
-  //         }))
-  //         setVerses(storedVerses)
-  //         console.log("Using stored verse text:", storedVerses)
-  //       } else {
-  //         // Fetch verses from Bible API
-  //         console.log("Fetching verses from Bible API for:", fetchedReference)
-  //         const fetchedVerses = await fetchVerses(fetchedReference)
-  //         setVerses(fetchedVerses)
-  //         console.log("Fetched verses from API:", fetchedVerses)
-  //       }
-  //     } catch (error) {
-  //       console.error("Error loading reference:", error)
-  //       setError(error instanceof Error ? error.message : "Failed to load reference")
-  //     } finally {
-  //       setIsLoading(false)
-  //     }
-  //   }
-    
-  //   loadReference()
-  // }, [currentReferenceId])
 
   useEffect(() => {
     if (!currentReferenceId) {
@@ -159,14 +115,14 @@ export function Study({ searchParams }: StudyProps) {
   }, [currentReferenceId]);
   
   
-  const menuOptions = [
+  const menuOptions: OptionDTO[] = [
     { value: "read", label: "Read" },
     { value: "reveal", label: "Reveal" },
-    { value: "cloud", label: "Cloud" },
+    { value: "cloud", label: "Cloud", disabled: true },
     { value: "flashcard", label: "Flashcard" },
     { value: "type", label: "Type" },
-    { value: "speak", label: "Speak" },
-    { value: "match", label: "Match" },
+    { value: "speak", label: "Speak", disabled: true },
+    { value: "match", label: "Match", disabled: true },
     { value: "phrase", label: "Phrase" }
   ]
   
@@ -255,7 +211,7 @@ export function Study({ searchParams }: StudyProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={handleBackClick}>
+          <Button className="border" variant="ghost" size="icon" onClick={handleBackClick}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
@@ -273,22 +229,32 @@ export function Study({ searchParams }: StudyProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             {menuOptions.map((option) => (
-              <DropdownMenuItem
-                key={option.value}
-                onClick={() => setSelectedOption(option.value)}
-                className={selectedOption === option.value ? "bg-accent" : ""}
-              >
-                {option.label}
-              </DropdownMenuItem>
+              (option.disabled) ? (
+                <DropdownMenuItem
+                  key={option.value}
+                  onClick={() => null}
+                  className={`${selectedOption === option.value ? "bg-accent" : ""} text-gray-500`}
+                >
+                  {option.label} (Coming Soon)
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  key={option.value}
+                  onClick={() => setSelectedOption(option.value)}
+                  className={selectedOption === option.value ? "bg-accent" : ""}
+                >
+                  {option.label}
+                </DropdownMenuItem>
+              )
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
       
-      <div className="text-sm text-muted-foreground mb-4">
+      {/* <div className="text-sm text-muted-foreground mb-4">
         Currently viewing: {selectedOptionLabel}
         {verses.length > 0 && ` • ${verses.length} verses loaded`}
-      </div>
+      </div> */}
       
       {renderContent()}
     </div>
