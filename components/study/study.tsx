@@ -146,7 +146,7 @@ export function Study({ searchParams }: StudyProps) {
           />
         )
       case "flashcard":
-        return <QuizFlashcard reference={reference} />
+        return <QuizFlashcard references={[reference]} />
       case "type":
         return <QuizType reference={reference} />
       case "speak":

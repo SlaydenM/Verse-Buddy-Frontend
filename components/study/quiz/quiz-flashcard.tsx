@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { BibleReference } from "@/types/bible"
-import { formatReference } from "@/lib/bible-utils"
+import { formatReference, formatReferences } from "@/lib/bible-utils"
 import Flashcard from "@/components/ui/flashcard"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
@@ -10,7 +10,7 @@ import { ArrowLeft, ArrowRight, CornerUpRight, CornerDownLeft, Text, Lightbulb }
 import clsx from "clsx"
 
 interface QuizFlashcardProps {
-  reference: BibleReference
+  references: BibleReference[]
 }
 
 interface Verse {
@@ -18,17 +18,19 @@ interface Verse {
   text: string
 }
 
-export function QuizFlashcard({ reference }: QuizFlashcardProps) {
-  const [verses, setVerses] = useState<Verse[]>([{ index: 1, text: "" }])
-  const [currentIndex, setCurrentIndex] = useState<number>(0)
-  const [prevIndex, setPrevIndex] = useState<number | null>(null)
-  const [direction, setDirection] = useState<"next" | "prev" | "next-u" | "prev-u">("next")
-  const [isFlipped, setIsFlipped] = useState<boolean>(false)
-
+export function QuizFlashcard({ references }: QuizFlashcardProps) {
+  const [verses, setVerses] = useState<Verse[]>([{ index: 1, text: "" }]);
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [prevIndex, setPrevIndex] = useState<number | null>(null);
+  const [direction, setDirection] = useState<'next' | 'prev' | 'next-u' | 'prev-u'>('next');
+  const [isFlipped, setIsFlipped] = useState<boolean>(false);
+  
   const shuffleVerses = (): Verse[] => {
     // Pair each element with its original index
-    const indexedArray = reference.text.map((text: string, index: number) => ({ index, text }))
-
+    const indexedArray = references.reduce((acc: Verse[], ref: BibleReference) => (
+      acc.concat(ref.text.map((text: string, index: number): Verse => ({ index, text })))
+    ), []);
+    
     // Fisher–Yates shuffle
     for (let i = indexedArray.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1))
@@ -74,7 +76,7 @@ export function QuizFlashcard({ reference }: QuizFlashcardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Flashcard - {formatReference(reference)}</CardTitle>
+        <CardTitle>Flashcard - {formatReferences(references)}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="relative w-full aspect-[5/3] max-w-md mx-auto">

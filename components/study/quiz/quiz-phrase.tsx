@@ -3,27 +3,27 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { BibleReference } from "@/types/bible"
 import { formatReference } from "@/lib/bible-utils"
-import { useEffect, useState } from "react"
+import { get } from "http"
+import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 
 interface QuizPhraseProps {
-  reference: BibleReference
+  references: BibleReference[]
 }
 
-export function QuizPhrase({ reference }: QuizPhraseProps) {
-  const [phraseData, setPhraseData] = useState({ verseNum: 1, phrase: "", rest: "" })
+export function QuizPhrase({ references }: QuizPhraseProps) {
+  const [phraseData, setPhraseData] = useState({ refIndex: 0, verseNum: 1, phrase: "", rest: "" })
   const [isRestVisible, setIsRestVisible] = useState(false)
 
   const formatPhrase = () => {
     const { verseNum, phrase, rest } = phraseData
-
+    
     return (
       <span>
         <span className="px-[0.15rem] text-xs text-gray-400 align-super">{verseNum}</span>
         <span>
           <span className="text-gray-400">
-            {reference.text[verseNum - 1].split(" ").slice(0, 3).join(" ").trim() !==
-              phrase.split(" ").slice(0, 3).join(" ").trim() && ".."}
+            {reference.text[verseNum - 1].split(" ").slice(0, 3).join(" ").trim() !== phrase.split(" ").slice(0, 3).join(" ").trim() && ".."}
           </span>
           {phrase.trim()}
           <span
@@ -58,9 +58,9 @@ export function QuizPhrase({ reference }: QuizPhraseProps) {
   }
 
   const generateNewPhraseData = () => {
-    const verseIndex = Math.floor(Math.random() * reference.text.length)
+    const verseIndex = Math.floor(Math.random() * (reference.text.length))
     const verseContent = reference.text[verseIndex]
-
+    
     // Split and retain punctuation
     const phrases = splitPhrases(verseContent)
     console.log(phrases)
@@ -83,9 +83,9 @@ export function QuizPhrase({ reference }: QuizPhraseProps) {
         : Math.max(4, phraseWords.length - 1 - 4)
     phrase = phraseWords.slice(0, endIndex).join(" ")
     const rest = verseContent.split(phrase).at(-1) || ""
-
-    return {
-      verseNum: verseIndex + 1,
+    
+    return { 
+      verseNum: verseIndex + 1, 
       phrase: phrase,
       rest,
     }
@@ -109,7 +109,7 @@ export function QuizPhrase({ reference }: QuizPhraseProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Phrase - {formatReference(reference)}</CardTitle>
+        <CardTitle>Phrase - {formatReferences(references)}</CardTitle>
       </CardHeader>
       <CardContent>
         {/* Buttons */}
