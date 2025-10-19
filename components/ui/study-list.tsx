@@ -1,13 +1,12 @@
 "use client"
-import { Collection } from "@/components/ui/collection"
 import { CreateNewStudy } from "@/components/ui/create-study-modal"
 import { EditStudyModal } from "@/components/ui/edit-study-modal"
 import { apiClient } from "@/lib/api-client"
-import { BookType, getChapterCount, getVerseCount } from "@/lib/bible-data"
+import { getVerseCount } from "@/lib/bible-data"
 import type { BibleReference } from "@/types/bible"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { Study } from "../study/study-item"
+import { Study } from "./study-item"
 
 interface StudyListProps {
   references: BibleReference[]

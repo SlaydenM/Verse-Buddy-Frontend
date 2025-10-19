@@ -72,10 +72,10 @@ export const Collection = ({
         <BookOpen className="h-4 w-4 text-muted-foreground flex-shrink-0" />
         <div className="min-w-0 flex-1">
           <div className="font-medium text-sm sm:text-base truncate">{title}</div>
-          <div className="text-xs sm:text-sm text-muted-foreground truncate">{subtitle}</div>
+          <div className="text-xs text-wrap sm:text-sm text-muted-foreground truncate">{subtitle}</div>
         </div>
       </div>
-
+      
       <div className="flex items-center gap-1 ml-2 flex-shrink-0">
         {/* Favorite Button */}
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleFavoriteClick}>

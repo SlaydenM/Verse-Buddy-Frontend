@@ -7,7 +7,7 @@ import { BookType, getChapterCount, getVerseCount } from "@/lib/bible-data"
 import type { BibleReference } from "@/types/bible"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { Study } from "../study/study-item"
+import { Study } from "./study-item"
 
 interface CollectionListProps {
   references: BibleReference[]

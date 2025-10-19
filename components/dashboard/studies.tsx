@@ -175,19 +175,19 @@ export function StudiesDashboard() {
 
   // Show authenticated user dashboard
   return (
-    <div className="container mx-auto px-4 py-6 space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="sm:container sm:mx-auto sm:px-4 sm:py-6 space-y-6">
+      <div className="flex items-center justify-between flex-wrap">
         <h1 className="text-3xl font-bold">My Studies</h1>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center flex-wrap gap-3">
+          <Badge variant="secondary" className="text-sm">
+            {totalReferences} studies • {uniqueBooks} books • {totalVerses} verses
+          </Badge>
           <Button
             onClick={handleStudyClick}
             className="bg-gray-200 dark:bg-white text-gray-900 hover:bg-gray-300 dark:hover:bg-gray-100"
           >
             Quiz!
           </Button>
-          <Badge variant="secondary" className="text-sm">
-            {totalReferences} studies • {uniqueBooks} books • {totalVerses} verses
-          </Badge>
         </div>
       </div>
 
@@ -213,7 +213,7 @@ export function StudiesDashboard() {
 
       {references.length > 0 && (
         <>
-          <div className="flex gap-5 w-full">
+          <div className="sm:flex space-y-6 sm:space-y-0 gap-5 w-full">
             {/* Favorites Section */}
             <Card className="w-full">
               <CardHeader>
@@ -238,7 +238,7 @@ export function StudiesDashboard() {
                 )}
               </CardContent>
             </Card>
-
+            
             {/* Recents Section */}
             <Card className="w-full">
               <CardHeader>
@@ -253,7 +253,7 @@ export function StudiesDashboard() {
               </CardContent>
             </Card>
           </div>
-
+          
           {/* All Books Section - Using Collection Component */}
           <Card>
             <CardHeader>

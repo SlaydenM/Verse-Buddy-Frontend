@@ -16,7 +16,7 @@ export function QuizRead({ references }: QuizReadProps) {
     return reference.text.map((verse, i) => {
       const startsWithNewline = verse.startsWith("\n")
       const lines = (startsWithNewline ? verse.slice(1) : verse).split("\n") // Split verse into lines by '\n'
-
+      
       return (
         <span key={i}>
           {/* Heading */}
@@ -63,7 +63,7 @@ export function QuizRead({ references }: QuizReadProps) {
           <>
             {references.map((ref, index) => (
               <div key={index}>
-                <div className="flex items-center gap-3 mt-4 -ml-3 text-gray-500 dark:text-gray-400">
+                <div className="flex items-center gap-3 mt-4 ml-2 sm:-ml-3 text-gray-500 dark:text-gray-400">
                   <span className="text-sm font-medium whitespace-nowrap">{formatReference(ref)}</span>
                   <div className="flex-1 border-b border-gray-300 dark:border-gray-600" />
                 </div>

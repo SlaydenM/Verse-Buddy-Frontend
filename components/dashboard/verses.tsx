@@ -101,9 +101,9 @@ export function VersesDashboard() {
   const verseRanges = references.map((ref) => `${ref.startVerse}-${ref.endVerse}`).join(", ")
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-8">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+    <div className="sm:container sm:mx-auto sm:px-4 sm:py-6 space-y-6">
+      <div className="flex items-center justify-between flex-wrap">
+        <div className="flex items-center flex-wrap gap-3">
           <Button variant="ghost" size="icon" onClick={handleBackClick}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -117,15 +117,15 @@ export function VersesDashboard() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <Badge variant="secondary" className="text-sm">
+            {references.length} studies • {totalVerses} verses
+          </Badge>
           <Button
             onClick={handleStudyClick}
             className="bg-gray-200 dark:bg-white text-gray-900 hover:bg-gray-300 dark:hover:bg-gray-100"
           >
             Quiz!
           </Button>
-          <Badge variant="secondary" className="text-sm">
-            {references.length} studies • {totalVerses} verses
-          </Badge>
         </div>
       </div>
 

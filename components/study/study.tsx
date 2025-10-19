@@ -91,6 +91,11 @@ export function Study({ searchParams }: StudyProps) {
       setError(err instanceof Error ? err.message : "Failed to load reference");
     } finally {
       setIsLoading(false);
+      const selected = menuOptions.find((option) => option.value = selectedOption);
+      if (selected?.disabled || selected?.coming) {
+        const newSelected = menuOptions.filter((option) => (!option.disabled && !option.coming)).at(0)
+        if (newSelected) setSelectedOption(newSelected.value)
+      }
     }
   }
   
@@ -131,7 +136,7 @@ export function Study({ searchParams }: StudyProps) {
       o.disabled = !menuItemsAllowedAll.includes(i);
     })
   }
-
+  
   const renderContent = () => {
     if (!references || references.length === 0) return null
     
