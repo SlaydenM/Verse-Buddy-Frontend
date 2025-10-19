@@ -31,7 +31,7 @@ export function QuizRead({ references }: QuizReadProps) {
           {/* Verse */}
           <span style={startsWithNewline ? { marginLeft: "1rem" } : {}}>
             {/* Number */}
-            <span className="px-[0.15rem] text-xs text-gray-400 align-super">{i + 1}</span>
+            <span className="px-[0.15rem] text-xs text-gray-400 align-super">{i + reference.startVerse}</span>
             
             {/* Lines */}
             {lines.map((line, j) => (
@@ -60,16 +60,17 @@ export function QuizRead({ references }: QuizReadProps) {
               {formatPassage(references[0])}
             </p>
           ) : (
-            <p>
-              {references.map((ref) => (
-                <>
-                  <h1>{formatReference(ref)}</h1>
-                  {formatPassage(ref)}
-                </>
+            <>
+              {references.map((ref, index) => (
+                <div key={index}>
+                  <p>
+                    {/* <span className="">{formatReference(ref)}</span> */}
+                    {formatPassage(ref)}
+                  </p>
+                </div>
               ))}
-            </p>
+            </>
           )
-        
         }
       </CardContent>
     </Card>

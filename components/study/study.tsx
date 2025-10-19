@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { apiClient } from "@/lib/api-client"
 import { fetchVerses } from "@/lib/bible-api"
-import { formatReference } from "@/lib/bible-utils"
+import { formatReferences } from "@/lib/bible-utils"
 import type { BibleReference, BibleVerse } from "@/types/bible"
 import { AlertCircle, ArrowLeft, Loader2, Menu } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -13,6 +13,7 @@ import { useEffect, useState } from "react"
 // import { URLSearchParams } from "next/dist/compiled/@edge-runtime/primitives/url"
 
 import dynamic from 'next/dynamic'
+import { BookType } from "@/lib/bible-data"
 
 const QuizRead = dynamic(() => import('@/components/study/quiz/quiz-read').then(m => m.QuizRead), { ssr: false })
 const QuizReveal = dynamic(() => import('@/components/study/quiz/quiz-reveal').then(m => m.QuizReveal), { ssr: false })
@@ -26,137 +27,136 @@ const QuizPhrase = dynamic(() => import('@/components/study/quiz/quiz-phrase').t
 interface OptionDTO {
   value: string, 
   label: string,
-  disabled?: boolean,
+  coming?: boolean,
+  disabled?: boolean
 }
 
 interface StudyProps {
   searchParams: {
     referenceId?: string,
-    quizType?: string
+    quizType?: string,
+    book?: BookType,
+    chapter?: number
   }
 }
 
 export function Study({ searchParams }: StudyProps) {
   const router = useRouter()
   const [selectedOption, setSelectedOption] = useState(searchParams.quizType || "read")
-  const [reference, setReference] = useState<BibleReference | null>(null)
+  const [references, setReferences] = useState<BibleReference[] | null>(null)
   const [verses, setVerses] = useState<BibleVerse[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
   // Get referenceId from props or URL params
-  const currentReferenceId = searchParams.referenceId
+  const referenceId = searchParams.referenceId;
+  const book = searchParams.book;
+  const chapter = searchParams.chapter;
   
   const handleBackClick = () => {
     router.back()
   }
-
-  useEffect(() => {
-    if (!currentReferenceId) {
-      setIsLoading(false);
-      return;
-    }
-    
-    let isActive = true; // flag to prevent state updates after unmount or stale calls
-    
-    const loadReference = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        console.log("Fetching reference with ID:", currentReferenceId);
-        const result = await apiClient.getReference(currentReferenceId);
-        
-        console.log("found");
-        if (!isActive) return; // ignore result if component unmounted or ID changed
-        
-        if (!result || !result.reference) {
-          throw new Error("Reference not found");
-        }
-        
-        const fetchedReference = result.reference;
-        setReference(fetchedReference);
-        
-        console.log("checkz");
-        if (fetchedReference.text && fetchedReference.text.length > 0) {
-          // Use stored text
-          const storedVerses: BibleVerse[] = fetchedReference.text.map((text: string, index: number) => ({
-            verse: fetchedReference.startVerse + index,
-            text: text.trim(),
-          }));
-          setVerses(storedVerses);
-          console.log("Using stored verse text:", storedVerses);
-        } else {
-          // Fetch verses from external Bible API
-          console.log("Fetching verses from Bible API for:", fetchedReference);
-          const fetchedVerses = await fetchVerses(fetchedReference);
-          if (isActive) {
-            setVerses(fetchedVerses);
-            console.log("Fetched verses from API:", fetchedVerses);
-          }
-        }
-      } catch (err) {
-        if (isActive) {
-          console.error("Error loading reference:", err);
-          setError(err instanceof Error ? err.message : "Failed to load reference");
-        }
-      } finally {
-        if (isActive) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    loadReference();
-    
-    return () => {
-      isActive = false; // cleanup on unmount or dep change
-    };
-  }, [currentReferenceId]);
   
+  useEffect(() => { loadReferences() }, [referenceId]);
+  
+  const loadReferences = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      var result;
+      if (referenceId) {
+        console.log("Fetching reference with ID:", referenceId);
+        result = await apiClient.getReference(referenceId);
+        if (!result) throw new Error("Reference not found");
+        setReferences([result.reference]);
+      } else if (book) {
+        if (chapter) {
+          console.log("Fetching reference with book and chapter:", book, chapter);
+          result = await apiClient.getReferencesByChapter(book, chapter);
+        } else {
+          console.log("Fetching reference with book:", book);
+          result = await apiClient.getReferencesByBook(book);
+        }
+        if (!result) throw new Error("Reference not found");
+        setReferences(result.references);
+      }
+      
+    } catch (err) {
+      console.error("Error loading reference:", err);
+      setError(err instanceof Error ? err.message : "Failed to load reference");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+  
+  // const title = (chapter) ? (book + " " + 2) || (book ? (book + " " + 2) : (references && formatReferences(references)));
+  let title: string;
+  if (book) {
+    if (chapter) {
+      title = book + " " + chapter; 
+    } else {
+      title = book;
+    }
+  } else if (references) {
+    title = formatReferences(references)
+  } else {
+    title = "Empty study";
+  }
   
   const menuOptions: OptionDTO[] = [
     { value: "read", label: "Read" },
     { value: "reveal", label: "Reveal" },
-    { value: "cloud", label: "Cloud", disabled: true },
+    { value: "cloud", label: "Cloud", coming: true },
     { value: "flashcard", label: "Flashcard" },
     { value: "type", label: "Type" },
-    { value: "speak", label: "Speak", disabled: true },
-    { value: "match", label: "Match", disabled: true },
+    { value: "speak", label: "Speak", coming: true },
+    { value: "match", label: "Match", coming: true },
     { value: "phrase", label: "Phrase" }
   ]
   
-  const selectedOptionLabel = menuOptions.find((option) => option.value === selectedOption)?.label
-  
+  // Disable options according to references
+  const menuItemsAllowedAll = [3, 7] // Phrase, flashcard
+  const menuItemsAllowedBook = [0, 3, 7] // Read, phrase, flashcard
+  if (book) {
+    menuOptions.forEach((o, i) => {
+      o.disabled = !menuItemsAllowedBook.includes(i);
+    })
+  } else if (!chapter && !referenceId) {
+    menuOptions.forEach((o, i) => {
+      o.disabled = !menuItemsAllowedAll.includes(i);
+    })
+  }
+
   const renderContent = () => {
-    if (!reference) return null
+    if (!references || references.length === 0) return null
     
     switch (selectedOption) {
       case "read":
-        return <QuizRead references={[reference]} />
+        return <QuizRead references={references} />
       case "reveal":
-        return <QuizReveal reference={reference} />
+        return <QuizReveal reference={references[0]} />
       case "cloud":
         return (
           <QuizCloud
-            reference={reference}
+            reference={references[0]}
             verses={verses}
             settings={{ difficulty: "medium", blankPercentage: 15 }}
             onSettingsChange={() => {}}
           />
         )
       case "flashcard":
-        return <QuizFlashcard references={[reference]} />
+        return <QuizFlashcard references={references} />
       case "type":
-        return <QuizType reference={reference} />
+        return <QuizType reference={references[0]} />
       case "speak":
-        return <QuizSpeak reference={reference} />
+        return <QuizSpeak reference={references[0]} />
       case "match":
-        return <QuizMatch reference={reference} />
+        return <QuizMatch reference={references[0]} />
       case "phrase":
-        return <QuizPhrase references={[reference]} />
+        return <QuizPhrase references={references} />
       default:
-        return <QuizRead references={[reference]} />
+        return <QuizRead references={references} />
     }
   }
   
@@ -180,7 +180,7 @@ export function Study({ searchParams }: StudyProps) {
     )
   }
   
-  if (!currentReferenceId) {
+  if (!referenceId && !book && !chapter) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -196,7 +196,7 @@ export function Study({ searchParams }: StudyProps) {
     )
   }
   
-  if (!reference) {
+  if (!references || references.length === 0) {
     return (
       <div className="space-y-6">
         <Alert>
@@ -216,7 +216,7 @@ export function Study({ searchParams }: StudyProps) {
           </Button>
           <div>
             <h1 className="text-3xl font-bold">Study</h1>
-            <p className="text-muted-foreground mt-1">{formatReference(reference)}</p>
+            <p className="text-muted-foreground mt-1">{title}</p>
           </div>
         </div>
         
@@ -229,32 +229,29 @@ export function Study({ searchParams }: StudyProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             {menuOptions.map((option) => (
-              (option.disabled) ? (
-                <DropdownMenuItem
-                  key={option.value}
-                  onClick={() => null}
-                  className={`${selectedOption === option.value ? "bg-accent" : ""} text-gray-500`}
-                >
-                  {option.label} (Coming Soon)
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem
-                  key={option.value}
-                  onClick={() => setSelectedOption(option.value)}
-                  className={selectedOption === option.value ? "bg-accent" : ""}
-                >
-                  {option.label}
-                </DropdownMenuItem>
+              (!option.disabled) && (
+                (option.coming) ? (
+                  <DropdownMenuItem
+                    key={option.value}
+                    onClick={() => null}
+                    className={`${selectedOption === option.value ? "bg-accent" : ""} text-gray-500`}
+                  >
+                    {option.label} (Coming Soon)
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem
+                    key={option.value}
+                    onClick={() => setSelectedOption(option.value)}
+                    className={selectedOption === option.value ? "bg-accent" : ""}
+                  >
+                    {option.label}
+                  </DropdownMenuItem>
+                )
               )
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      
-      {/* <div className="text-sm text-muted-foreground mb-4">
-        Currently viewing: {selectedOptionLabel}
-        {verses.length > 0 && ` • ${verses.length} verses loaded`}
-      </div> */}
       
       {renderContent()}
     </div>
