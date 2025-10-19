@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { BibleReference } from "@/types/bible"
-import { formatReference, formatReferences } from "@/lib/bible-utils"
+import { formatReferences } from "@/lib/bible-utils"
 import Flashcard from "@/components/ui/flashcard"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"

@@ -133,7 +133,7 @@ export function Study({ searchParams }: StudyProps) {
     
     switch (selectedOption) {
       case "read":
-        return <QuizRead reference={reference} />
+        return <QuizRead references={[reference]} />
       case "reveal":
         return <QuizReveal reference={reference} />
       case "cloud":
@@ -154,9 +154,9 @@ export function Study({ searchParams }: StudyProps) {
       case "match":
         return <QuizMatch reference={reference} />
       case "phrase":
-        return <QuizPhrase reference={reference} />
+        return <QuizPhrase references={[reference]} />
       default:
-        return <QuizRead reference={reference} />
+        return <QuizRead references={[reference]} />
     }
   }
   

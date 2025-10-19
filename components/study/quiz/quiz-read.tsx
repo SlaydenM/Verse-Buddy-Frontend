@@ -2,15 +2,15 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { BibleReference } from "@/types/bible"
-import { formatReference } from "@/lib/bible-utils"
+import { formatReference, formatReferences } from "@/lib/bible-utils"
 import React from "react"
 
 interface QuizReadProps {
-  reference: BibleReference
+  references: BibleReference[]
 }
 
-export function QuizRead({ reference }: QuizReadProps) {
-  const formatPassage = () => {
+export function QuizRead({ references }: QuizReadProps) {
+  const formatPassage = (reference: BibleReference) => {
     const headingKeys = (reference.headings) ? Object.keys(reference.headings) : []
     
     return reference.text.map((verse, i) => {
@@ -51,12 +51,26 @@ export function QuizRead({ reference }: QuizReadProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Read - {formatReference(reference)}</CardTitle>
+        <CardTitle>Read - {formatReferences(references)}</CardTitle>
       </CardHeader>
       <CardContent>
-        <p>
-          {formatPassage()}
-        </p>
+        {references.length === 1 ?
+          (
+            <p>
+              {formatPassage(references[0])}
+            </p>
+          ) : (
+            <p>
+              {references.map((ref) => (
+                <>
+                  <h1>{formatReference(ref)}</h1>
+                  {formatPassage(ref)}
+                </>
+              ))}
+            </p>
+          )
+        
+        }
       </CardContent>
     </Card>
   )

@@ -2,8 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { BibleReference } from "@/types/bible"
-import { formatReference } from "@/lib/bible-utils"
-import { get } from "http"
+import { formatReferences } from "@/lib/bible-utils"
 import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 
@@ -16,14 +15,14 @@ export function QuizPhrase({ references }: QuizPhraseProps) {
   const [isRestVisible, setIsRestVisible] = useState(false)
 
   const formatPhrase = () => {
-    const { verseNum, phrase, rest } = phraseData
+    const { refIndex, verseNum, phrase, rest } = phraseData
     
     return (
       <span>
         <span className="px-[0.15rem] text-xs text-gray-400 align-super">{verseNum}</span>
         <span>
           <span className="text-gray-400">
-            {reference.text[verseNum - 1].split(" ").slice(0, 3).join(" ").trim() !== phrase.split(" ").slice(0, 3).join(" ").trim() && ".."}
+            {references[refIndex].text[verseNum - 1].split(" ").slice(0, 3).join(" ").trim() !== phrase.split(" ").slice(0, 3).join(" ").trim() && ".."}
           </span>
           {phrase.trim()}
           <span
@@ -58,8 +57,9 @@ export function QuizPhrase({ references }: QuizPhraseProps) {
   }
 
   const generateNewPhraseData = () => {
-    const verseIndex = Math.floor(Math.random() * (reference.text.length))
-    const verseContent = reference.text[verseIndex]
+    const refIndex = Math.floor(Math.random() * (references.length))
+    const verseIndex = Math.floor(Math.random() * (references[refIndex].text.length))
+    const verseContent = references[refIndex].text[verseIndex]
     
     // Split and retain punctuation
     const phrases = splitPhrases(verseContent)
@@ -85,6 +85,7 @@ export function QuizPhrase({ references }: QuizPhraseProps) {
     const rest = verseContent.split(phrase).at(-1) || ""
     
     return { 
+      refIndex,
       verseNum: verseIndex + 1, 
       phrase: phrase,
       rest,
