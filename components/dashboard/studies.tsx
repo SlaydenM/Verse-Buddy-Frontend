@@ -7,11 +7,12 @@ import { StudyList } from "../ui/study-list"
 import { CreateNewStudy } from "@/components/ui/create-study-modal"
 import { useAuth } from "@/contexts/auth-context"
 import { apiClient } from "@/lib/api-client"
-import { bibleBooks, getVerseCount } from "@/lib/bible-data"
+import { bibleBooks } from "@/lib/bible-data"
 import type { BibleReference } from "@/types/bible"
 import { BookOpen, Clock, Heart, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
 
 interface Study {
   id: string
@@ -31,18 +32,18 @@ interface CollectionItem {
 export function StudiesDashboard() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
-  
-  const [favoriteMap, setFavoriteMap] = useState<Record<string, boolean>>({});
+
+  const [favoriteMap, setFavoriteMap] = useState<Record<string, boolean>>({})
   const [favoriteStudies, setFavoriteStudies] = useState<BibleReference[]>([])
   const [recentStudies, setRecentStudies] = useState<BibleReference[]>([])
   const [references, setReferences] = useState<BibleReference[]>([] as BibleReference[])
   const [isLoading, setIsLoading] = useState(true)
   // console.log("Rerender!: ", user, isLoading, references.length)
-  
+
   // Load recent studies from API (only when user is authenticated)
   useEffect(() => {
     if (!user) return // Skip for guests
-    
+
     async function fetchData() {
       // Fire all requests in parallel, don't await each individually
       const favPromise = apiClient.getFavoriteReferences()
@@ -50,13 +51,9 @@ export function StudiesDashboard() {
       const allPromise = apiClient.getAllReferences()
 
       try {
-      // console.log("awaiting...")
-        const [favResult, recResult, allResult] = await Promise.allSettled([
-          favPromise,
-          recPromise,
-          allPromise,
-        ])
-        
+        // console.log("awaiting...")
+        const [favResult, recResult, allResult] = await Promise.allSettled([favPromise, recPromise, allPromise])
+
         if (favResult.status === "fulfilled") {
           setFavoriteStudies(favResult.value?.favorites || [])
         } else {
@@ -70,13 +67,18 @@ export function StudiesDashboard() {
           setRecentStudies([])
           console.error("Error loading recent studies:", recResult.reason)
         }
-        
+
         if (allResult.status === "fulfilled") {
           setReferences(allResult.value?.references || [])
-          
+
           // Initialize favorite map
           if (Object.keys(favoriteMap).length === 0) {
-            setFavoriteMap(allResult.value?.references.reduce((acc: any, ref: BibleReference) => ({ ...acc, [ref.id]: ref.isFavorite }), {}));
+            setFavoriteMap(
+              allResult.value?.references.reduce(
+                (acc: any, ref: BibleReference) => ({ ...acc, [ref.id]: ref.isFavorite }),
+                {},
+              ),
+            )
           }
         } else {
           setReferences([])
@@ -91,27 +93,27 @@ export function StudiesDashboard() {
       }
     }
     if (user) {
-      fetchData();
+      fetchData()
     }
   }, [user])
-  
+
   // Handlers
-  const handleStudyClick = (reference: BibleReference) => {
-    router.push(`/study?referenceId=${reference.id}`)
+  const handleStudyClick = () => {
+    router.push("/study")
   }
-  
-  const updateFavorite = async (ids: string[], isFavorite: boolean) => {   
+
+  const updateFavorite = async (ids: string[], isFavorite: boolean) => {
     if (isFavorite) {
       setFavoriteMap(ids.reduce((acc: any, id: string) => ({ ...acc, [id]: false }), favoriteMap))
-      setFavoriteStudies((prev) => prev.filter(ref => !ids.includes(ref.id)))
-      await apiClient.unfavoriteAll(ids);
+      setFavoriteStudies((prev) => prev.filter((ref) => !ids.includes(ref.id)))
+      await apiClient.unfavoriteAll(ids)
     } else {
       setFavoriteMap(ids.reduce((acc: any, id: string) => ({ ...acc, [id]: true }), favoriteMap))
-      setFavoriteStudies((prev) => [...new Set(prev.concat(references.filter(ref => ids.includes(ref.id))))])
-      await apiClient.favoriteAll(ids);
+      setFavoriteStudies((prev) => [...new Set(prev.concat(references.filter((ref) => ids.includes(ref.id))))])
+      await apiClient.favoriteAll(ids)
     }
   }
-  
+
   // Convert recent studies to the Study format for consistency
   /*const recentStudiesFormatted: Study[] = recentStudies.slice(0, 10).map((ref, index) => ({
     id: `recent-${index}`,
@@ -119,17 +121,17 @@ export function StudiesDashboard() {
     dateAdded: new Date().toISOString().split("T")[0], // Mock date
     isFavorite: false,
   }))*/
-  
+
   // CHANGE: IMPORT FROM MODULE
   const openStudy = (reference: BibleReference) => {
     const params = new URLSearchParams({
-      referenceId: reference.id || ""
+      referenceId: reference.id || "",
     })
     router.push(`/study/?${params.toString()}`)
   }
   const onDelete = async (refs: BibleReference[]) => {
     console.log("Delete collection:", refs)
-    
+
     try {
       // Delete all references in this collection via API
       for (const ref of refs) {
@@ -138,7 +140,7 @@ export function StudiesDashboard() {
           references.splice(references.indexOf(ref), 1)
         }
       }
-      
+
       // Refresh the page to update the UI
       router.refresh()
     } catch (error) {
@@ -150,8 +152,7 @@ export function StudiesDashboard() {
   const totalReferences = references.length || 0
   const uniqueBooks = [...new Set(references.map((ref) => ref.book))].length
   const totalVerses = references.reduce((sum, ref) => sum + (ref.endVerse - ref.startVerse + 1), 0)
-  
-  
+
   // Show loading spinner while auth is loading
   if (authLoading) {
     return (
@@ -161,7 +162,7 @@ export function StudiesDashboard() {
       </div>
     )
   }
-  
+
   // Show guest welcome message if not authenticated
   if (!user) {
     return (
@@ -171,24 +172,32 @@ export function StudiesDashboard() {
       </div>
     )
   }
-  
+
   // Show authenticated user dashboard
   return (
     <div className="container mx-auto px-4 py-6 space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">My Studies</h1>
-        <Badge variant="secondary" className="text-sm">
-          {totalReferences} studies • {uniqueBooks} books • {totalVerses} verses
-        </Badge>
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={handleStudyClick}
+            className="bg-gray-200 dark:bg-white text-gray-900 hover:bg-gray-300 dark:hover:bg-gray-100"
+          >
+            Quiz!
+          </Button>
+          <Badge variant="secondary" className="text-sm">
+            {totalReferences} studies • {uniqueBooks} books • {totalVerses} verses
+          </Badge>
+        </div>
       </div>
-      
-      {(isLoading) && (
+
+      {isLoading && (
         <div className="flex items-center justify-center p-8">
           <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
           <span>Loading studies...</span>
         </div>
       )}
-      
+
       {!isLoading && references.length === 0 && (
         <Card>
           <CardContent className="text-center py-12">
@@ -201,7 +210,7 @@ export function StudiesDashboard() {
           </CardContent>
         </Card>
       )}
-      
+
       {references.length > 0 && (
         <>
           <div className="flex gap-5 w-full">
@@ -220,7 +229,7 @@ export function StudiesDashboard() {
                     No favorite studies yet. Add some studies to your favorites to see them here.
                   </p>
                 ) : (
-                  <CollectionList 
+                  <CollectionList
                     references={favoriteStudies}
                     favoriteMap={favoriteMap}
                     updateFavorite={updateFavorite}
@@ -229,7 +238,7 @@ export function StudiesDashboard() {
                 )}
               </CardContent>
             </Card>
-            
+
             {/* Recents Section */}
             <Card className="w-full">
               <CardHeader>
@@ -240,15 +249,11 @@ export function StudiesDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <StudyList 
-                  references={recentStudies} 
-                  favoriteMap={favoriteMap}
-                  updateFavorite={updateFavorite}
-                />
+                <StudyList references={recentStudies} favoriteMap={favoriteMap} updateFavorite={updateFavorite} />
               </CardContent>
             </Card>
           </div>
-          
+
           {/* All Books Section - Using Collection Component */}
           <Card>
             <CardHeader>
@@ -259,11 +264,7 @@ export function StudiesDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <CollectionList 
-                references={references} 
-                favoriteMap={favoriteMap}
-                updateFavorite={updateFavorite}
-              />
+              <CollectionList references={references} favoriteMap={favoriteMap} updateFavorite={updateFavorite} />
             </CardContent>
           </Card>
         </>

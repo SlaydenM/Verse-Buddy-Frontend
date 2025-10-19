@@ -78,10 +78,14 @@ export function Study({ searchParams }: StudyProps) {
           console.log("Fetching reference with book:", book);
           result = await apiClient.getReferencesByBook(book);
         }
-        if (!result) throw new Error("Reference not found");
+        if (!result) throw new Error("References not found");
+        setReferences(result.references);
+      } else {
+        console.log("Fetching all references");
+        result = await apiClient.getAllReferences();
+        if (!result) throw new Error("References not found");
         setReferences(result.references);
       }
-      
     } catch (err) {
       console.error("Error loading reference:", err);
       setError(err instanceof Error ? err.message : "Failed to load reference");
@@ -175,22 +179,6 @@ export function Study({ searchParams }: StudyProps) {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      </div>
-    )
-  }
-  
-  if (!referenceId && !book && !chapter) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Study</h1>
-        </div>
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            No reference ID provided. Please select a study from your dashboard or provide a referenceId parameter.
-          </AlertDescription>
         </Alert>
       </div>
     )

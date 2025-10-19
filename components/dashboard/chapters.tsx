@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CollectionList } from "@/components/ui/collection-list"
 import { CreateNewStudy } from "@/components/ui/create-study-modal"
-import { useAuth } from "@/contexts/auth-context"
 import { apiClient } from "@/lib/api-client"
 import type { BibleReference } from "@/types/bible"
 import { ArrowLeft, BookOpen, Loader2 } from "lucide-react"
@@ -25,23 +24,25 @@ export function ChaptersDashboard() {
   // const { user, loading: authLoading } = useAuth()
   const searchParams = useSearchParams()
   const book = searchParams.get("book") || "Genesis"
-  
-  const [favoriteMap, setFavoriteMap] = useState<Record<string, boolean>>({});
+
+  const [favoriteMap, setFavoriteMap] = useState<Record<string, boolean>>({})
   const [references, setReferences] = useState<BibleReference[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  
+
   // Load references for this specific book from API
   useEffect(() => {
     // if (!user) return // Skip for guests
-    
+
     const loadBookReferences = async () => {
       try {
         setIsLoading(true)
         const result = await apiClient.getReferencesByBook(book)
         setReferences(result.references)
-        
+
         if (Object.keys(favoriteMap).length === 0) {
-          setFavoriteMap(result.references.reduce((acc: any, ref: BibleReference) => ({ ...acc, [ref.id]: ref.isFavorite }), {}));
+          setFavoriteMap(
+            result.references.reduce((acc: any, ref: BibleReference) => ({ ...acc, [ref.id]: ref.isFavorite }), {}),
+          )
         }
       } catch (error) {
         console.error("Error loading book references:", error)
@@ -49,32 +50,36 @@ export function ChaptersDashboard() {
         setIsLoading(false)
       }
     }
-    
+
     if (book) {
       loadBookReferences()
     }
   }, [])
-  
-  const updateFavorite = async (ids: string[], isFavorite: boolean) => {   
+
+  const updateFavorite = async (ids: string[], isFavorite: boolean) => {
     if (isFavorite) {
       setFavoriteMap(ids.reduce((acc: any, id: string) => ({ ...acc, [id]: false }), favoriteMap))
-      await apiClient.unfavoriteAll(ids);
+      await apiClient.unfavoriteAll(ids)
     } else {
       setFavoriteMap(ids.reduce((acc: any, id: string) => ({ ...acc, [id]: true }), favoriteMap))
-      await apiClient.favoriteAll(ids);
+      await apiClient.favoriteAll(ids)
     }
   }
   // Get unique chapters from the references
   const uniqueChapters = [...new Set(references.map((ref) => ref.chapter))].sort((a, b) => a - b)
   const chapterCount = uniqueChapters.length
-  
+
   // Calculate chapter statistics
   const totalVerses = references.reduce((sum, ref) => sum + (ref.endVerse - ref.startVerse + 1), 0)
-  
+
   const handleBackClick = () => {
     router.back()
   }
-  
+
+  const handleStudyClick = () => {
+    router.push(`/study?book=${book}`)
+  }
+
   return (
     <div className="container mx-auto px-4 py-6 space-y-8">
       <div className="flex items-center justify-between">
@@ -87,18 +92,26 @@ export function ChaptersDashboard() {
             <p className="text-muted-foreground">Select a chapter to view studies</p>
           </div>
         </div>
-        <Badge variant="secondary" className="text-sm">
-          {references.length} studies • {uniqueChapters.length} chapters • {totalVerses} verses
-        </Badge>
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={handleStudyClick}
+            className="bg-gray-200 dark:bg-white text-gray-900 hover:bg-gray-300 dark:hover:bg-gray-100"
+          >
+            Quiz!
+          </Button>
+          <Badge variant="secondary" className="text-sm">
+            {references.length} studies • {uniqueChapters.length} chapters • {totalVerses} verses
+          </Badge>
+        </div>
       </div>
-      
+
       {isLoading && (
         <div className="flex items-center justify-center p-8">
           <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
           <span>Loading chapters...</span>
         </div>
       )}
-      
+
       {!isLoading && references.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
@@ -119,11 +132,11 @@ export function ChaptersDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <CollectionList 
-                references={references} 
+              <CollectionList
+                references={references}
                 favoriteMap={favoriteMap}
                 updateFavorite={updateFavorite}
-                book={book} 
+                book={book}
               />
             </div>
           </CardContent>
