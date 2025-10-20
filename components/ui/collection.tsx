@@ -60,7 +60,7 @@ export const Collection = ({
   return (
     <div
       key={title}
-      className="flex items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-muted/50 active:bg-muted/70 cursor-pointer transition-colors touch-manipulation"
+      className="flex items-center justify-between p-3 sm:p-4 bg-secondary border rounded-lg hover:bg-muted/50 active:bg-muted/70 cursor-pointer transition-colors touch-manipulation"
       onClick={onClick}
     >
       <div className="flex items-center gap-3 min-w-0 flex-1">
