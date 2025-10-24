@@ -13,6 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { User, Settings, LogOut, Loader2 } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
+import Link from "next/link"
 
 export function UserMenu() {
   const { user, signOut, loading } = useAuth()
@@ -67,9 +68,11 @@ export function UserMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem disabled>
-          <User className="mr-2 h-4 w-4" />
-          <span>Profile</span>
+        <DropdownMenuItem asChild>
+          <Link href="/account" className="cursor-pointer">
+            <User className="mr-2 h-4 w-4" />
+            <span>Account</span>
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuItem disabled>
           <Settings className="mr-2 h-4 w-4" />

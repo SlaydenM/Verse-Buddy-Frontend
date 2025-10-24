@@ -9,17 +9,23 @@ import { ChapterGrid } from "@/components/ui/chapter-grid"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { VerseRangeSlider } from "@/components/ui/verse-range-slider"
-import { apiClient } from "@/lib/api-client"
-import { bibleBooks, bibleVersions, BookType, getChapterCount, getVerseCount, getYouVersionURL } from "@/lib/bible-data"
+import {
+  bibleBooks,
+  bibleVersions,
+  type BookType,
+  getChapterCount,
+  getVerseCount,
+  getYouVersionURL,
+} from "@/lib/bible-data"
 import type { BibleReference } from "@/types/bible"
 import { BookOpen, CheckCircle, Copy, Loader2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import PassageEditor from "../ui/passage-editor"
 
-interface PassageDataDTO { 
-  text: string[]; 
-  headings: { [verseNum: number]: string };
-  startVerse: number;
+interface PassageDataDTO {
+  text: string[]
+  headings: { [verseNum: number]: string }
+  startVerse: number
 }
 
 export interface ScriptureSelectorModalProps {
@@ -27,7 +33,7 @@ export interface ScriptureSelectorModalProps {
   onOpenChange: (open: boolean) => void
   onReferenceSelect: (reference: BibleReference) => void
   initReference?: Partial<BibleReference>
-  handleSubmit: (reference: BibleReference) => Promise<{result: BibleReference, success: string}>
+  handleSubmit: (reference: BibleReference) => Promise<{ result: BibleReference; success: string }>
 }
 
 export function ScriptureSelectorModal({
@@ -35,7 +41,7 @@ export function ScriptureSelectorModal({
   onOpenChange,
   onReferenceSelect,
   initReference = {},
-  handleSubmit
+  handleSubmit,
 }: ScriptureSelectorModalProps) {
   // ----------------------------
   // INITIAL STATE (once only)
@@ -52,10 +58,9 @@ export function ScriptureSelectorModal({
     headings: {},
     startVerse: 0,
   })
-  
+
   console.log("INIT:", initReference, initReference.book || "Genesis")
-  
-  
+
   // Render variables
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -70,11 +75,11 @@ export function ScriptureSelectorModal({
   // const didMountRef = useRef(false)
   const prevBookRef = useRef(book)
   const prevChapterRef = useRef(chapter)
-  
-  // const updateChapter = 
-  
-  // const updateBook = 
-  
+
+  // const updateChapter =
+
+  // const updateBook =
+
   useEffect(() => {
     setVersion(initReference.version || "NKJV")
     setBook(initReference.book || "Genesis")
@@ -82,7 +87,7 @@ export function ScriptureSelectorModal({
     setStartVerse(initReference.startVerse || 1)
     setEndVerse(initReference.endVerse || 1)
   }, [initReference])
-  
+
   // ----------------------------
   // React to book changes AFTER init
   // ----------------------------
@@ -95,7 +100,7 @@ export function ScriptureSelectorModal({
     }
     prevBookRef.current = book
   }, [book])
-  
+
   // ----------------------------
   // React to chapter changes AFTER init
   // ----------------------------
@@ -109,14 +114,14 @@ export function ScriptureSelectorModal({
     }
     prevChapterRef.current = chapter
   }, [chapter])
-  
+
   useEffect(() => {
-    setStartVerse(passageData.startVerse);
+    setStartVerse(passageData.startVerse)
     if (passageData.text.length > 0) {
-      setEndVerse(passageData.startVerse + passageData.text.length - 1);
+      setEndVerse(passageData.startVerse + passageData.text.length - 1)
     }
   }, [passageData])
-  
+
   // ----------------------------
   // Enable update detection *after* first render
   // ----------------------------
@@ -125,7 +130,7 @@ export function ScriptureSelectorModal({
   //   // didMountRef.current = true
   //   initChapterAndVerse()
   // }, [])
-  
+
   const handleVersionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setVersion(e.target.value)
     setError(null)
@@ -155,21 +160,21 @@ export function ScriptureSelectorModal({
     setError(null)
     setSuccess(null)
   }
-  
+
   const handlePasteFromBible = () => {
-    let url = getYouVersionURL(book, chapter, version)
+    const url = getYouVersionURL(book, chapter, version)
     // if (startVerse === endVerse)
     //   url += "." + startVerse
     window.open(url, "_blank")
   }
-  
+
   const handleCreateStudy = async () => {
     if (!canCreateStudy) return
-    
+
     setIsSaving(true)
     setError(null)
     setSuccess(null)
-    
+
     try {
       const reference: BibleReference = {
         id: "0", // filler
@@ -180,21 +185,21 @@ export function ScriptureSelectorModal({
         endVerse,
         finalVerse: verseCount,
         text: passageData.text,
-        headings: passageData.headings
+        headings: passageData.headings,
       }
-      
-      const { result, success } = await handleSubmit(reference);
-      
+
+      const { result, success } = await handleSubmit(reference)
+
       setSuccess(success)
-      
+
       // Wait a moment to show the success message
       setTimeout(() => {
         // Call the parent handler to navigate to the study
         onReferenceSelect(result)
-        
+
         // Close the dialog
         onOpenChange(false)
-        
+
         // Reset form state
         setSuccess(null)
         setError(null)
@@ -294,13 +299,13 @@ export function ScriptureSelectorModal({
               />
             </div>
           )}
-          
+
           {/* Verse Range Selection */}
           {book && chapter && verseCount > 0 && (
             <div className="space-y-2">
               <Label className="text-sm font-medium">Verses</Label>
               <Card>
-                <CardContent className="space-y-4 pt-6">
+                <CardContent className="space-y-4 pt-4 sm:pt-6 px-3 sm:px-6 pb-4 sm:pb-6">
                   <VerseRangeSlider
                     min={1}
                     max={verseCount}
@@ -320,16 +325,16 @@ export function ScriptureSelectorModal({
             <div className="space-y-2">
               <Label className="text-sm font-medium">Passage</Label>
               <Card>
-                <CardContent className="space-y-4 pt-6">
+                <CardContent className="space-y-3 sm:space-y-4 pt-4 sm:pt-6 px-3 sm:px-6 pb-4 sm:pb-6">
                   {/* Reference and Paste Button */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
                     <div className="text-sm font-medium">{selectedReference}</div>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={handlePasteFromBible}
                       disabled={isLoadingPassage || isSaving}
-                      className="flex items-center gap-2 bg-transparent"
+                      className="flex items-center gap-2 bg-transparent w-full sm:w-auto py-2.5 sm:py-2 touch-manipulation"
                     >
                       {isLoadingPassage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
                       {isLoadingPassage ? "Loading..." : "Paste From Bible ↗"}
@@ -353,14 +358,14 @@ export function ScriptureSelectorModal({
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isSaving}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto py-2.5 sm:py-2 touch-manipulation"
             >
               Cancel
             </Button>
             <Button
               onClick={handleCreateStudy}
               disabled={!canCreateStudy || isLoading || isSaving}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto py-2.5 sm:py-2 touch-manipulation"
             >
               {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {isSaving ? "Creating Study..." : "Create Study"}

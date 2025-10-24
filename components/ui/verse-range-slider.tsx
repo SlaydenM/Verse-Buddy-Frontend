@@ -45,36 +45,36 @@ export function VerseRangeSlider({
     [min, max],
   )
 
-  const handleMouseDown = useCallback(
-    (type: "start" | "end") => (e: React.MouseEvent) => {
+  const handlePointerDown = useCallback(
+    (type: "start" | "end") => (e: React.PointerEvent) => {
       if (disabled) return
       e.preventDefault()
       setIsDragging(type)
+      // Capture pointer for smooth dragging
+      ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
     },
     [disabled],
   )
 
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
+  const handlePointerMove = useCallback(
+    (e: PointerEvent) => {
       if (!isDragging || disabled) return
 
       const newValue = getValueFromPosition(e.clientX)
 
       if (isDragging === "start") {
         if (newValue > endValue) {
-          // Start handle moved past end handle - swap them
           onStartChange(endValue)
           onEndChange(newValue)
-          setIsDragging("end") // Continue dragging as the end handle
+          setIsDragging("end")
         } else {
           onStartChange(newValue)
         }
       } else if (isDragging === "end") {
         if (newValue < startValue) {
-          // End handle moved past start handle - swap them
           onEndChange(startValue)
           onStartChange(newValue)
-          setIsDragging("start") // Continue dragging as the start handle
+          setIsDragging("start")
         } else {
           onEndChange(newValue)
         }
@@ -83,7 +83,7 @@ export function VerseRangeSlider({
     [isDragging, disabled, getValueFromPosition, startValue, endValue, onStartChange, onEndChange],
   )
 
-  const handleMouseUp = useCallback(() => {
+  const handlePointerUp = useCallback(() => {
     setIsDragging(null)
   }, [])
 
@@ -117,24 +117,24 @@ export function VerseRangeSlider({
 
   useEffect(() => {
     if (isDragging) {
-      document.addEventListener("mousemove", handleMouseMove)
-      document.addEventListener("mouseup", handleMouseUp)
+      document.addEventListener("pointermove", handlePointerMove)
+      document.addEventListener("pointerup", handlePointerUp)
       return () => {
-        document.removeEventListener("mousemove", handleMouseMove)
-        document.removeEventListener("mouseup", handleMouseUp)
+        document.removeEventListener("pointermove", handlePointerMove)
+        document.removeEventListener("pointerup", handlePointerUp)
       }
     }
-  }, [isDragging, handleMouseMove, handleMouseUp])
+  }, [isDragging, handlePointerMove, handlePointerUp])
 
   const startPercentage = getPercentage(startValue)
   const endPercentage = getPercentage(endValue)
   const transitionClass = isDragging ? "" : "transition-all duration-200 ease-out"
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 sm:space-y-4">
       <div
         ref={sliderRef}
-        className={`relative h-2 bg-muted rounded-full cursor-pointer ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+        className={`relative h-1 sm:h-1.5 bg-muted rounded-full cursor-pointer touch-none ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
         onClick={handleTrackClick}
       >
         {/* Track */}
@@ -149,41 +149,45 @@ export function VerseRangeSlider({
           }}
         />
 
-        {/* Start handle */}
+        {/* Start handle - larger for touch */}
         <div
-          className={`absolute top-1/2 w-5 h-5 bg-background border-2 border-primary rounded-full cursor-grab active:cursor-grabbing transform -translate-y-1/2 -translate-x-1/2 hover:scale-110 ${transitionClass} ${disabled ? "cursor-not-allowed" : ""}`}
+          className={`absolute top-1/2 w-7 h-7 sm:w-6 sm:h-6 bg-background border-2 border-primary rounded-full cursor-grab active:cursor-grabbing transform -translate-y-1/2 -translate-x-1/2 hover:scale-110 active:scale-125 ${transitionClass} ${disabled ? "cursor-not-allowed" : ""}`}
           style={{ left: `${startPercentage}%` }}
-          onMouseDown={handleMouseDown("start")}
+          onPointerDown={handlePointerDown("start")}
         />
 
-        {/* End handle */}
+        {/* End handle - larger for touch */}
         <div
-          className={`absolute top-1/2 w-5 h-5 bg-background border-2 border-primary rounded-full cursor-grab active:cursor-grabbing transform -translate-y-1/2 -translate-x-1/2 hover:scale-110 ${transitionClass} ${disabled ? "cursor-not-allowed" : ""}`}
+          className={`absolute top-1/2 w-7 h-7 sm:w-6 sm:h-6 bg-background border-2 border-primary rounded-full cursor-grab active:cursor-grabbing transform -translate-y-1/2 -translate-x-1/2 hover:scale-110 active:scale-125 ${transitionClass} ${disabled ? "cursor-not-allowed" : ""}`}
           style={{ left: `${endPercentage}%` }}
-          onMouseDown={handleMouseDown("end")}
+          onPointerDown={handlePointerDown("end")}
         />
       </div>
 
-      {/* Value display with button in center */}
-      <div className="flex justify-between items-center text-sm text-muted-foreground">
-        <span>Verse {startValue}</span>
-        <div>
+      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2 sm:gap-0 text-sm text-muted-foreground">
+        <div className="flex justify-between sm:justify-start items-center sm:flex-1">
+          <span className="text-xs sm:text-sm">Verse {startValue}</span>
+          <span className="sm:hidden text-xs">Verse {endValue}</span>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <button
             onClick={handleSelectStart}
             disabled={disabled}
-            className="mx-3 px-3 py-1 text-xs bg-muted hover:bg-muted/80 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2.5 sm:px-3 sm:py-1 text-sm sm:text-xs bg-muted hover:bg-muted/80 active:bg-muted/70 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
           >
             Select Verse {startValue}
           </button>
           <button
             onClick={handleSelectFullChapter}
             disabled={disabled}
-            className="mx-3 px-3 py-1 text-xs bg-muted hover:bg-muted/80 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2.5 sm:px-3 sm:py-1 text-sm sm:text-xs bg-muted hover:bg-muted/80 active:bg-muted/70 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
           >
             Select Full Chapter
           </button>
         </div>
-        <span>Verse {endValue}</span>
+
+        <span className="hidden sm:block text-xs sm:text-sm sm:flex-1 text-right">Verse {endValue}</span>
       </div>
     </div>
   )

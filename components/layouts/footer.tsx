@@ -7,7 +7,7 @@ export function Footer() {
         <div className="flex items-center justify-center gap-1 mb-2">
           Made with <Heart className="h-4 w-4 fill-red-500 text-red-500" /> for Bible study
         </div>
-        <p>© {new Date().getFullYear()} Verse Buddy. All rights reserved.</p>
+        {/*<p>© {new Date().getFullYear()} Verse Buddy. All rights reserved.</p>*/}
       </div>
     </footer>
   )

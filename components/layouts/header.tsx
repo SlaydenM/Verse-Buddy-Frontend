@@ -13,7 +13,7 @@ export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const { user, loading } = useAuth()
-  
+
   return (
     <header className="border-b">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -21,7 +21,7 @@ export function Header() {
           <BookOpen className="h-6 w-6" />
           <span className="font-semibold text-xl">Verse Buddy</span>
         </Link>
-        
+
         <div className="hidden md:flex items-center gap-6">
           <nav className="flex items-center gap-6">
             <Link href="/" className="text-sm font-medium hover:underline">
@@ -33,10 +33,10 @@ export function Header() {
                 Studies
               </Link>
             )}
-            <Link href="#" className="text-sm font-medium hover:underline">
+            <Link href="/about" className="text-sm font-medium hover:underline">
               About
             </Link>
-            <Link href="#" className="text-sm font-medium hover:underline">
+            <Link href="/help" className="text-sm font-medium hover:underline">
               Help
             </Link>
           </nav>
@@ -53,7 +53,7 @@ export function Header() {
               ))}
           </div>
         </div>
-        
+
         <div className="md:hidden flex items-center gap-2">
           <ModeToggle />
           {!loading && !user && (
@@ -67,7 +67,7 @@ export function Header() {
           </Button>
         </div>
       </div>
-      
+
       {isMenuOpen && (
         <div className="md:hidden border-t">
           <nav className="container mx-auto px-4 py-3 flex flex-col gap-3">
@@ -84,10 +84,18 @@ export function Header() {
                 Studies
               </Link>
             )}
-            <Link href="#" className="text-sm font-medium py-2 hover:underline" onClick={() => setIsMenuOpen(false)}>
+            <Link
+              href="/about"
+              className="text-sm font-medium py-2 hover:underline"
+              onClick={() => setIsMenuOpen(false)}
+            >
               About
             </Link>
-            <Link href="#" className="text-sm font-medium py-2 hover:underline" onClick={() => setIsMenuOpen(false)}>
+            <Link
+              href="/help"
+              className="text-sm font-medium py-2 hover:underline"
+              onClick={() => setIsMenuOpen(false)}
+            >
               Help
             </Link>
             {!user && (
